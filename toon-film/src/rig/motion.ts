@@ -20,9 +20,9 @@ export function walk(phase: number, amount = 1): Pose {
 /** Sitting on a seat of height `seat` (feet on the floor in front). */
 export function sit(seat = 0.95): Pose {
   return {
-    hips: [0, seat - HIPS_Y + 0.05, -0.05],
-    footL: [-0.26, 0.1, 0.75],
-    footR: [0.26, 0.1, 0.75],
+    hips: [0, seat - HIPS_Y - 0.02, -0.05], // pelvis on the seat
+    footL: [-0.26, 0.1, 0.6], // knees bend forward
+    footR: [0.26, 0.1, 0.6],
     lean: -0.05,
   };
 }
