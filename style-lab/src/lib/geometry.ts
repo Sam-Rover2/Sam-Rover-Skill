@@ -22,6 +22,7 @@ const make = (lo: boolean) => {
     cone: new THREE.ConeGeometry(1, 1, n(32, 5)),
     pot: new THREE.CylinderGeometry(1, 0.75, 1, n(32, 6)),
     cup: new THREE.CylinderGeometry(1, 0.8, 1, n(32, 6)),
+    prism: new THREE.CylinderGeometry(1, 1, 1, 3),
     torus: new THREE.TorusGeometry(1, 0.3, 12, 32),
   };
 };

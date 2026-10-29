@@ -104,7 +104,12 @@ tools/sheet.sh        кадры в указанные секунды → кон
 - Персонажей ставить так, чтобы между ними и мебелью был зазор ≥ 0.1. Проверять кадром сбоку или под углом 3/4 (`tools/sheet.sh`).
 - Нитки и верёвки — кривые Безье длиннее расстояния между концами: провисают, а не проходят сквозь объекты.
 
-### 3.7 Каталог стилей
+### 3.7 Каталог персонажей, зданий и стилей
+Каталог: `style-lab/catalog/gallery.html`.
+- **Персонажи:** 13 типов из конструктора `style-lab/src/rig/Figure.tsx`, описания в `src/designs.ts`: bean, chibi, adult, adult-f, blocky, rubberhose, bear, cat, robot, elder, kid, monster, hero. Черты можно смешивать.
+- **Здания:** `src/props/Buildings.tsx`: townhouse, skyscraper, cottage, cafe, factory, parisian. Все в реальном масштабе.
+- **Детализация:** L1 (дальний план), L2 (средний), L3 (крупный) — `DetailHouse`.
+- **Стили отрисовки** (отдельная ось):
 13 готовых стилей отрисовки: `style-lab/catalog/gallery.html`, коды в `style-lab/src/styles.ts`. Стиль ролика по умолчанию — `toon`. Если пользователь назвал стиль, перенести `materials.ts`, `geometry.ts` и запись стиля из `style-lab` в проект фильма. Свои 3D-модели — в GLB; их материалы заменяются нашими `toon()`/`outline()`.
 
 ## 4. Движение

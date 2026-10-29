@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
 import { G } from '../lib/geometry';
-import { flat } from '../lib/materials';
+import { flat, outline, toon } from '../lib/materials';
 import { LINE } from '../lib/style';
 import type { V3 } from '../lib/Toon';
 
@@ -13,13 +13,14 @@ const r3 = (a: V3) => a.map((x) => Math.round(x * 1000) / 1000).join(',');
  * The joint (elbow/knee) is placed so that the limb keeps its length: when the hand comes
  * closer to the shoulder, the curve bows out in `bendDir`. Both ends are rounded (sphere caps).
  */
-export const Limb: React.FC<{ root: V3; tip: V3; length: number; bendDir: V3; radius?: number; color?: string }> = ({
+export const Limb: React.FC<{ root: V3; tip: V3; length: number; bendDir: V3; radius?: number; color?: string; line?: number }> = ({
   root,
   tip,
   length,
   bendDir,
   radius = 0.055,
   color = LINE.color,
+  line = 0,
 }) => {
   const key = `${r3(root)}|${r3(tip)}|${r3(bendDir)}|${length}|${radius}`;
   const { geometry, end } = useMemo(() => {
@@ -47,12 +48,19 @@ export const Limb: React.FC<{ root: V3; tip: V3; length: number; bendDir: V3; ra
   }, [key]);
   useEffect(() => () => geometry.dispose(), [geometry]);
 
-  const m = flat(color);
+  const m = color === LINE.color ? flat(color) : toon(color);
   return (
     <group>
       <mesh geometry={geometry} material={m} />
       <mesh geometry={G.lowSphere} material={m} position={root} scale={radius} />
       <mesh geometry={G.lowSphere} material={m} position={end} scale={radius} />
+      {line > 0 && (
+        <>
+          <mesh geometry={geometry} material={outline(line)} />
+          <mesh geometry={G.lowSphere} material={outline(line)} position={root} scale={radius} />
+          <mesh geometry={G.lowSphere} material={outline(line)} position={end} scale={radius} />
+        </>
+      )}
     </group>
   );
 };
