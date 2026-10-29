@@ -106,7 +106,6 @@ tools/sheet.sh        кадры в указанные секунды → кон
 
 ### 3.7 Каталог персонажей, зданий и стилей
 Каталог: `style-lab/catalog/gallery.html`.
-- **Реалистичные люди (low-poly, процедурные):** `style-lab/src/human/Human.ts` — `buildHuman(spec)` даёт SkinnedMesh с 19 костями, морфами лица (`jawOpen`, `smile`, `browUp`) и одеждой из параметров; `poseHuman()` (ходьба, взмах), `setFace()` (мимика, моргание). Морфы хранить как смещения: `geometry.morphTargetsRelative = true`, иначе меш исчезает.
 - **Мультяшные персонажи:** 13 типов из конструктора `style-lab/src/rig/Figure.tsx`, описания в `src/designs.ts`: bean, chibi, adult, adult-f, blocky, rubberhose, bear, cat, robot, elder, kid, monster, hero. Черты можно смешивать.
 - **Здания:** `src/props/Buildings.tsx`: townhouse, skyscraper, cottage, cafe, factory, parisian. Все в реальном масштабе.
 - **Детализация:** L1 (дальний план), L2 (средний), L3 (крупный) — `DetailHouse`.
