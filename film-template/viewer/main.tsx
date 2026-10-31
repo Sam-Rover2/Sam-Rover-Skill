@@ -17,6 +17,7 @@ import { MODELS } from './models.generated';
 setModelUrlResolver((f) => MODELS[f] ?? f);
 
 type V3 = [number, number, number];
+let fitHook: ((pos: V3, target: V3) => void) | null = null;
 type Item = { key: string; stage: string; title: string; status: string; render: () => JSX.Element; home: { pos: V3; target: V3 }; shots?: Shot[]; light?: { ambient: string; ambientI: number; sun: string; sunI: number; sunPos: V3; fog?: [string, number, number] }; bg?: string };
 
 const STUDIO = { ambient: '#ffffff', ambientI: 1.6, sun: '#fff6e8', sunI: 2.1, sunPos: [-5, 9, 8] as V3 };
@@ -65,7 +66,7 @@ const items: Item[] = [
     render: () => (
       <>
         {floor}
-        <ScaleRef>
+        <ScaleRef onFit={(p, t) => fitHook?.(p, t)}>
           <o.C />
         </ScaleRef>
       </>
@@ -116,14 +117,23 @@ const items: Item[] = [
 ];
 
 /** Object + a person standing next to it (placed by the object's real size, never inside it). */
-const ScaleRef: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ScaleRef: React.FC<{ children: React.ReactNode; onFit?: (pos: V3, target: V3) => void }> = ({ children, onFit }) => {
   const obj = useRef<THREE.Group>(null);
   const person = useRef<THREE.Group>(null);
+  const fitted = useRef(false);
   useFrame(() => {
     if (!obj.current || !person.current) return;
     const b = new THREE.Box3().setFromObject(obj.current);
     if (b.isEmpty()) return;
     person.current.position.set(b.min.x - 1.4, 0, Math.max(b.max.z, 0) + 0.5);
+    if (!fitted.current && onFit) {
+      // frame the OBJECT (the person stays at the side for scale)
+      fitted.current = true;
+      const c = b.getCenter(new THREE.Vector3());
+      const sz = b.getSize(new THREE.Vector3());
+      const d = Math.max(1.6, Math.max(sz.x, sz.y, sz.z) * 2.2);
+      onFit([c.x + d * 0.45, c.y + d * 0.35, c.z + d], [c.x - 0.2, c.y, c.z]);
+    }
   });
   return (
     <>
@@ -250,6 +260,7 @@ const App: React.FC = () => {
       /* private mode */
     }
   }, [notes]);
+  fitHook = (pos, target) => setGoal((g) => ({ pos, target, fov: 40, n: g.n + 1 }));
   const pick = (k: string) => {
     const it = items.find((i) => i.key === k)!;
     setSel(k);
@@ -291,7 +302,7 @@ const App: React.FC = () => {
         <Canvas camera={{ fov: 40, near: 0.1, far: 800, position: item.home.pos }} gl={{ antialias: true }}>
           <Lights l={item.light ?? STUDIO} bg={item.bg ?? '#efe9df'} />
           <CameraRig goal={goal} />
-          {item.render()}
+          <group key={item.key}>{item.render()}</group>
         </Canvas>
         {frame && <div className="frame" style={{ aspectRatio: String(aspect) }} />}
         <div className="bar">
