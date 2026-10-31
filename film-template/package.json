@@ -7,7 +7,8 @@
     "studio": "remotion studio src/index.ts",
     "render": "remotion render src/index.ts film out/film.mp4",
     "typecheck": "tsc --noEmit",
-    "player": "remotion studio src/index.ts"
+    "player": "remotion studio src/index.ts",
+    "review": "node tools/build-review.mjs"
   },
   "dependencies": {
     "@fontsource/nunito": "^5.3.0",
