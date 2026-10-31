@@ -83,6 +83,35 @@ const TailCurve: React.FC<{ pts: V3[]; r?: number }> = ({ pts, r = 0.03 }) => {
   );
 };
 
+/** Surface of a container "filled with tails": tail-pink with darker curvy tail lines on top. */
+const tailFillTex = canvasTex('tail-fill', 256, 256, (g, w, h) => {
+  g.fillStyle = '#e99aa6';
+  g.fillRect(0, 0, w, h);
+  let seed = 5;
+  const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.lineCap = 'round';
+  for (let i = 0; i < 70; i++) {
+    const x = r() * w;
+    const y = r() * h;
+    const a = r() * Math.PI * 2;
+    const L = 30 + r() * 60;
+    g.strokeStyle = r() > 0.5 ? '#c86f80' : '#f6b9c3';
+    g.lineWidth = 3 + r() * 3;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.quadraticCurveTo(x + Math.cos(a + 0.8) * L * 0.6, y + Math.sin(a + 0.8) * L * 0.6, x + Math.cos(a) * L, y + Math.sin(a) * L);
+    g.stroke();
+  }
+}, [2, 2]);
+const fillMat = new THREE.MeshToonMaterial({ map: tailFillTex, color: '#ffffff', gradientMap: RAMP });
+/** Solid filler mesh (tail colour) with the tail-line texture. */
+const Filler: React.FC<{ geometry: THREE.BufferGeometry; position?: V3; scale?: V3 | number; rotation?: V3 }> = ({ geometry, position, scale, rotation }) => (
+  <group position={position} scale={scale} rotation={rotation}>
+    <mesh geometry={geometry} material={fillMat} />
+    <mesh geometry={geometry} material={outline(2)} />
+  </group>
+);
+
 /** Lifts its children so the lowest point touches the floor (y = 0): nothing sinks into the ground. */
 export const GroundFit: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const g = useRef<THREE.Group>(null);
@@ -111,6 +140,10 @@ const burlap = (base: string) =>
 /** Open sack (lathe profile) with a rolled-down rim. */
 const sackGeo = (() => {
   const prof = [[0, 0], [0.42, 0.02], [0.55, 0.2], [0.58, 0.5], [0.52, 0.85], [0.46, 1.0], [0.5, 1.06], [0.56, 1.06], [0.55, 1.0]].map(([x, y]) => new THREE.Vector2(x, y));
+  return new THREE.LatheGeometry(prof, 28);
+})();
+const sackFillGeo = (() => {
+  const prof = [[0, 0.03], [0.4, 0.05], [0.52, 0.2], [0.55, 0.5], [0.5, 0.85], [0.44, 0.97], [0.25, 1.02], [0, 1.04]].map(([x, y]) => new THREE.Vector2(x, y));
   return new THREE.LatheGeometry(prof, 28);
 })();
 
@@ -240,7 +273,9 @@ const TailBucket: React.FC = () => {
         return <Toon key={k} geometry={rimGeo} color="#4f545e" position={[0, H * k, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[r, r, r]} line={2} />;
       })}
       <Limb root={[-R, H * 0.9, 0]} tip={[R, H * 0.9, 0]} length={R * 3.2} bendDir={[0, 1, 0]} radius={0.02} color="#4f545e" />
-      {/* 2) fill: a heap of tails inside, several hanging over the rim */}
+      {/* 2) solid fill (tail colour, tail lines on top) up to just under the rim */}
+      <Filler geometry={new THREE.CylinderGeometry(0.96 * (0.8 + 0.2 * 0.9), 0.95 * 0.8, 0.9, 32)} position={[0, H * 0.45, 0]} scale={[R, H, R]} />
+      {/* 3) loose tails on top, several hanging over the rim */}
       {Array.from({ length: 14 }).map((_, i) => {
         const a = i * 2.4;
         const r0 = R * 0.15 + (i % 4) * R * 0.18;
@@ -272,7 +307,9 @@ const TailSack: React.FC = () => {
       <mesh geometry={sackGeo} material={mats[1]} />
       <mesh geometry={sackGeo} material={outline(3)} />
       <Tx geometry={plane} map={labelTex('sack-tails', [{ text: 'QUEUES', size: 80 }, { text: '× 500', size: 70, color: '#a3241f' }], '#efe2c4', '#5a3a1e', 256, 256)} position={[0, 0.5, 0.585]} scale={[0.42, 0.36, 1]} line={0} />
-      {/* heap of tails inside the open top */}
+      {/* solid fill following the sack's inside, slightly domed on top */}
+      <Filler geometry={sackFillGeo} />
+      {/* loose tails on top of the fill */}
       {Array.from({ length: 22 }).map((_, i) => {
         const a = i * 2.39;
         const r = 0.05 + (i % 5) * 0.08;
@@ -296,8 +333,19 @@ const TailPile: React.FC = () => {
     const x = Math.sin(n * 127.1 + 311.7) * 43758.5453;
     return x - Math.floor(x);
   };
+  const moundGeo = useMemo(() => {
+    const prof: THREE.Vector2[] = [];
+    for (let k = 0; k <= 12; k++) {
+      const r = (R * 0.92 * (12 - k)) / 12;
+      prof.push(new THREE.Vector2(r, mound(r) * 0.85 + 0.01));
+    }
+    return new THREE.LatheGeometry(prof, 40);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <group>
+      {/* solid body of the heap (tail colour, tail lines), tails lie on top of it */}
+      <Filler geometry={moundGeo} />
       {Array.from({ length: 120 }).map((_, i) => {
         let a = rnd(i) * Math.PI * 2;
         let r = Math.sqrt(rnd(i + 500)) * R * 0.95;
@@ -443,44 +491,35 @@ const RiceSack: React.FC = () => {
 
 /** Cast-iron manhole: square stone frame in the pavement, round cover with relief rings,
  * radial ribs, pick holes and big readable embossed text. */
-const manholeTex = canvasTex('manhole-top', 512, 512, (g, w, h) => {
+const manholeTex = canvasTex('manhole-top', 1024, 1024, (g, w) => {
   const cx = w / 2;
-  g.fillStyle = '#3d414b';
+  g.fillStyle = '#34373f';
   g.beginPath();
   g.arc(cx, cx, cx, 0, Math.PI * 2);
   g.fill();
-  // relief rings + ribs
-  g.strokeStyle = '#5c6270';
-  g.lineWidth = 10;
-  for (const r of [0.92, 0.62]) {
+  // only ONE outer relief ring and two pick holes — nothing behind the text
+  g.strokeStyle = '#4f5460';
+  g.lineWidth = 22;
+  g.beginPath();
+  g.arc(cx, cx, cx * 0.9, 0, Math.PI * 2);
+  g.stroke();
+  g.fillStyle = '#121418';
+  for (const a of [0, Math.PI]) {
     g.beginPath();
-    g.arc(cx, cx, cx * r, 0, Math.PI * 2);
-    g.stroke();
-  }
-  g.lineWidth = 7;
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * Math.PI * 2;
-    g.beginPath();
-    g.moveTo(cx + Math.cos(a) * cx * 0.64, cx + Math.sin(a) * cx * 0.64);
-    g.lineTo(cx + Math.cos(a) * cx * 0.9, cx + Math.sin(a) * cx * 0.9);
-    g.stroke();
-  }
-  // pick holes
-  g.fillStyle = '#16181d';
-  for (const a of [0.3, Math.PI + 0.3]) {
-    g.beginPath();
-    g.ellipse(cx + Math.cos(a) * cx * 0.77, cx + Math.sin(a) * cx * 0.77, 18, 9, a, 0, Math.PI * 2);
+    g.ellipse(cx + Math.cos(a) * cx * 0.76, cx, 30, 16, 0, 0, Math.PI * 2);
     g.fill();
   }
-  // big embossed text (light on dark, with a dark shadow for readability)
+  // big high-contrast text, thick dark outline
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  for (const [t, y, sz] of [['ÉGOUTS', cx - 40, 92], ['HANOI', cx + 40, 74], ['1902', cx + 108, 44]] as [string, number, number][]) {
-    g.font = `900 ${sz}px Georgia, serif`;
-    g.fillStyle = '#16181d';
-    g.fillText(t, cx + 4, y + 4);
-    g.fillStyle = '#c9cdd6';
-    g.fillText(t, cx, y);
+  g.lineJoin = 'round';
+  for (const [t, y, sz] of [['ÉGOUTS', cx - 95, 190], ['HANOI', cx + 90, 150], ['1902', cx + 225, 90]] as [string, number, number][]) {
+    g.font = `900 ${sz}px Arial Black, Arial, sans-serif`;
+    g.lineWidth = sz * 0.12;
+    g.strokeStyle = '#0b0c0f';
+    g.strokeText(t, cx, y, w * 0.8);
+    g.fillStyle = '#f2ead8';
+    g.fillText(t, cx, y, w * 0.8);
   }
 });
 const Manhole: React.FC = () => {
@@ -489,9 +528,9 @@ const Manhole: React.FC = () => {
   return (
     <group>
       {/* square stone frame set into the pavement */}
-      <Tx geometry={box} map={canvasTex('stone', 64, 64, (g) => { g.fillStyle = '#9a958a'; g.fillRect(0, 0, 64, 64); g.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 0; i < 40; i++) g.fillRect((i * 37) % 64, (i * 23) % 64, 3, 3); })} position={[0, 0.03, 0]} scale={[R * 2.6, 0.06, R * 2.6]} line={3} />
+      <Tx geometry={box} map={canvasTex('stone', 64, 64, (g) => { g.fillStyle = '#9a958a'; g.fillRect(0, 0, 64, 64); g.fillStyle = 'rgba(0,0,0,.12)'; for (let i = 0; i < 40; i++) g.fillRect((i * 37) % 64, (i * 23) % 64, 3, 3); })} position={[0, 0.03, 0]} scale={[R * 2.25, 0.06, R * 2.25]} line={3} />
       {/* iron ring frame */}
-      <Toon geometry={G.torus} color="#2f333c" position={[0, 0.075, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[R * 1.06, R * 1.06, 0.35]} line={2} />
+      <Toon geometry={rimGeo} color="#2f333c" position={[0, 0.1, 0]} rotation={[Math.PI / 2, 0, 0]} scale={R * 1.02} line={2} />
       {/* cover */}
       <Toon geometry={G.cyl} color="#3d414b" position={[0, 0.08, 0]} scale={[R, 0.05, R]} line={3} />
       <mesh geometry={G.disc} material={mat} position={[0, 0.106, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={R * 0.99} />
