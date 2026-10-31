@@ -47,6 +47,8 @@ export const Root: React.FC = () => (
     <Folder name="0-NEW">
       {/* the new film (v2), built from scratch */}
       <Composition id="new-film" component={Movie2} durationInFrames={Math.round(MOVIE2_SECONDS * pf)} fps={pf} width={width} height={height} />
+      {/* the same film for a wide 16:9 screen: the camera re-fits every shot automatically */}
+      <Composition id="new-film-wide" component={Movie2} durationInFrames={Math.round(MOVIE2_SECONDS * pf)} fps={pf} width={1920} height={1080} />
     </Folder>
     <Folder name="6-Film">
       {/* the whole film in one go, light 30 fps for watching in the player */}

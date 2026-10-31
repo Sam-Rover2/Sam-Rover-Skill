@@ -24,17 +24,30 @@ export interface Frame {
   pos: V3;
   target: V3;
   fov?: number;
+  /** Width (scene units) at the target that must stay in frame — in a vertical frame the camera backs off until it fits (QA-040). */
+  fit?: number;
 }
+/** Default width that must stay in frame: two characters side by side. */
+const FIT = 5.8;
 /** Camera that eases from frame a to frame b over the shot (0..1). */
 const Rig: React.FC<{ a: Frame; b: Frame; k: number }> = ({ a, b, k }) => {
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera;
+  const size = useThree((s) => s.size);
   useLayoutEffect(() => {
     const p = keys(k, [[0, a.pos], [1, b.pos]], smooth);
     const tg = keys(k, [[0, a.target], [1, b.target]], smooth);
     const f0 = keys(k, [[0, a.fov ?? 40], [1, b.fov ?? a.fov ?? 40]], smooth);
     // wide lens like the references: same subject size, camera closer, wider angle
     const f = Math.max(f0, WIDE);
-    const m = Math.tan((f0 * Math.PI) / 360) / Math.tan((f * Math.PI) / 360);
+    let m = Math.tan((f0 * Math.PI) / 360) / Math.tan((f * Math.PI) / 360);
+    // keep the required width in frame whatever the aspect (vertical 9:16 or wide 16:9)
+    const aspect = size.width / Math.max(1, size.height);
+    const d = Math.hypot(p[0] - tg[0], p[1] - tg[1], p[2] - tg[2]) * m;
+    const fit = keys(k, [[0, a.fit ?? FIT], [1, b.fit ?? a.fit ?? FIT]], smooth);
+    const halfW = Math.tan((f * Math.PI) / 360) * aspect;
+    const need = fit / 2 / halfW;
+    if (need > d) m *= need / d;
+    camera.aspect = aspect;
     camera.position.set(tg[0] + (p[0] - tg[0]) * m, tg[1] + (p[1] - tg[1]) * m, tg[2] + (p[2] - tg[2]) * m);
     camera.lookAt(tg[0], tg[1], tg[2]);
     camera.fov = f;
@@ -68,15 +81,28 @@ export interface Lamp {
   dist?: number;
 }
 
-/** One shot: canvas, light preset, extra lamps, camera move a→b (k = progress 0..1). */
-export const Shot: React.FC<{ light: Light; a: Frame; b?: Frame; k: number; lamps?: Lamp[]; children: React.ReactNode }> = ({ light, a, b, k, lamps = [], children }) => {
+/**
+ * ONE canvas for the whole film (no flash of an empty background at the cuts):
+ * shots only swap what is inside it.
+ */
+export const FilmCanvas: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { width, height, fps } = useVideoConfig();
   const frame = useCurrentFrame();
   return (
-    <AbsoluteFill style={{ background: light.bg }}>
+    <AbsoluteFill>
       <ThreeCanvas width={width} height={height} linear={false}>
-        <color attach="background" args={[light.bg]} />
         <InkPass seed={Math.floor((frame * 12) / fps) % 8} />
+        {children}
+      </ThreeCanvas>
+    </AbsoluteFill>
+  );
+};
+
+/** One shot: light preset, extra lamps, camera move a→b (k = progress 0..1). Lives inside FilmCanvas. */
+export const Shot: React.FC<{ light: Light; a: Frame; b?: Frame; k: number; lamps?: Lamp[]; children: React.ReactNode }> = ({ light, a, b, k, lamps = [], children }) => {
+  return (
+    <>
+        <color attach="background" args={[light.bg]} />
         <Rig a={a} b={b ?? a} k={k} />
         {light.fog && <fog attach="fog" args={light.fog} />}
         <ambientLight color={light.amb[0]} intensity={light.amb[1]} />
@@ -86,8 +112,7 @@ export const Shot: React.FC<{ light: Light; a: Frame; b?: Frame; k: number; lamp
           <pointLight key={i} position={l.pos} color={l.color} intensity={l.power ?? 30} distance={l.dist ?? 18} decay={1.6} />
         ))}
         {children}
-      </ThreeCanvas>
-    </AbsoluteFill>
+    </>
   );
 };
 
@@ -146,20 +171,38 @@ export const Room: React.FC<{
   side?: -1 | 1 | 0;
   wainscot?: string;
   sideWall?: THREE.Texture;
-}> = ({ w = 22, d = 18, h = 12, floor, wall, side = -1, wainscot, sideWall }) => (
-  <group>
-    <Tx geometry={box} map={floor} position={[0, -0.25, 0]} scale={[w, 0.5, d]} line={0} />
-    <Tx geometry={box} map={wall} position={[0, h / 2, -d / 2]} scale={[w, h, 0.4]} line={0} />
-    {side !== 0 && <Tx geometry={box} map={sideWall ?? wall} position={[(side * w) / 2, h / 2, 0]} scale={[0.4, h, d]} line={0} />}
-    {wainscot && (
-      <>
-        <Toon geometry={G.box} color={wainscot} position={[0, 1.4, -d / 2 + 0.3]} scale={[w, 2.8, 0.2]} line={2} />
-        <Toon geometry={G.box} color="#f4ead6" position={[0, 2.85, -d / 2 + 0.36]} scale={[w, 0.18, 0.18]} line={2} />
-        {side !== 0 && <Toon geometry={G.box} color={wainscot} position={[(side * w) / 2 - side * 0.3, 1.4, 0]} scale={[0.2, 2.8, d]} line={2} />}
-      </>
-    )}
-  </group>
-);
+  /** closed room: both side walls and a front wall far behind the camera, so no view ever shows the edge of the world (QA-041) */
+  closed?: boolean;
+  ceiling?: string;
+  front?: number;
+}> = ({ w = 22, d = 18, h = 12, floor, wall, side = -1, wainscot, sideWall, closed, ceiling, front = 26 }) => {
+  const zb = -d / 2;
+  const zf = closed ? front : d / 2;
+  const L = zf - zb;
+  const zc = (zb + zf) / 2;
+  const sides: number[] = closed ? [-1, 1] : side ? [side] : [];
+  return (
+    <group>
+      <Tx geometry={box} map={floor} position={[0, -0.25, zc]} scale={[w, 0.5, L]} line={0} />
+      <Tx geometry={box} map={wall} position={[0, h / 2, zb]} scale={[w, h, 0.4]} line={0} />
+      {sides.map((sd) => (
+        <Tx key={sd} geometry={box} map={sideWall ?? wall} position={[(sd * w) / 2, h / 2, zc]} scale={[0.4, h, L]} line={0} />
+      ))}
+      {closed && <Tx geometry={box} map={sideWall ?? wall} position={[0, h / 2, zf]} scale={[w, h, 0.4]} line={0} />}
+      {ceiling && <Toon geometry={G.box} color={ceiling} position={[0, h + 0.2, zc]} scale={[w, 0.4, L]} line={0} />}
+      {wainscot && (
+        <>
+          <Toon geometry={G.box} color={wainscot} position={[0, 1.4, zb + 0.3]} scale={[w, 2.8, 0.2]} line={2} />
+          <Toon geometry={G.box} color="#f4ead6" position={[0, 2.85, zb + 0.36]} scale={[w, 0.18, 0.18]} line={2} />
+          {sides.map((sd) => (
+            <Toon key={sd} geometry={G.box} color={wainscot} position={[(sd * w) / 2 - sd * 0.3, 1.4, zc]} scale={[0.2, 2.8, L]} line={2} />
+          ))}
+          {closed && <Toon geometry={G.box} color={wainscot} position={[0, 1.4, zf - 0.3]} scale={[w, 2.8, 0.2]} line={2} />}
+        </>
+      )}
+    </group>
+  );
+};
 
 /** A picture/sign hung on the back wall. */
 export const WallCard: React.FC<{ map: THREE.Texture; pos: V3; size: [number, number]; frame?: string; rot?: V3 }> = ({ map, pos, size, frame = '#5a3a24', rot }) => (
@@ -247,7 +290,7 @@ export const Tunnel: React.FC<{ len?: number }> = ({ len = 70 }) => {
 /** Cobblestone street corner with a yellow colonial facade. */
 export const StreetCorner: React.FC<{ sign?: boolean }> = ({ sign = true }) => (
   <group>
-    <Room w={30} d={22} h={14} floor={stoneTex('#c9b48c', [10, 8], 32)} wall={plasterTex('#f2c14e', [4, 2])} side={0} />
+    <Room w={60} d={22} h={14} floor={stoneTex('#c9b48c', [20, 12], 32)} wall={plasterTex('#f2c14e', [8, 2])} side={0} closed front={30} sideWall={plasterTex('#e9b84a', [8, 2])} />
     <Toon geometry={G.box} color="#b98a3a" position={[0, 0.25, -10.4]} scale={[30, 0.5, 1.2]} line={2} />
     {[-8, -2.6, 2.6, 8].map((x) => (
       <ShutterWindow key={x} pos={[x, 7.6, -10.7]} />
@@ -270,7 +313,7 @@ export const StreetCorner: React.FC<{ sign?: boolean }> = ({ sign = true }) => (
 /** Office corner: patterned wallpaper, wood wainscot, French flag, clock. */
 export const OfficeCorner: React.FC<{ flag?: boolean; side?: -1 | 1 | 0 }> = ({ flag = true, side = -1 }) => (
   <group>
-    <Room w={26} d={20} h={13} floor={woodTex('#b0703c', '#7e4a24', 6, [4, 4])} wall={stripeTex('#5fa58f', '#4f907c', [6, 3])} side={side} wainscot="#7a4424" />
+    <Room w={30} d={20} h={13} floor={woodTex('#b0703c', '#7e4a24', 6, [4, 6])} wall={stripeTex('#5fa58f', '#4f907c', [6, 3])} side={side} wainscot="#7a4424" closed ceiling="#f4ead6" front={30} />
     {flag && (
       <group position={[7.5, 0, -9.5]}>
         <Toon geometry={G.cyl} color="#d9b44a" position={[0, 4, 0]} scale={[0.07, 8, 0.07]} line={2} />
@@ -290,7 +333,7 @@ export const OfficeCorner: React.FC<{ flag?: boolean; side?: -1 | 1 | 0 }> = ({ 
 /** Night alley: blue brick walls, warm lamp, open or closed manhole. */
 export const AlleyCorner: React.FC = () => (
   <group>
-    <Room w={24} d={20} h={13} floor={stoneTex('#5a6390', [8, 7], 32)} wall={brickTex('#4f5aa8', '#2c335e', [6, 4])} side={-1} sideWall={brickTex('#46509a', '#2c335e', [6, 4])} />
+    <Room w={26} d={20} h={13} floor={stoneTex('#5a6390', [8, 10], 32)} wall={brickTex('#4f5aa8', '#2c335e', [6, 4])} side={-1} sideWall={brickTex('#46509a', '#2c335e', [12, 4])} closed front={28} />
     <group position={[4, 6.5, -9.6]}>
       <Toon geometry={G.box} color="#2a2420" position={[0, 0.9, 0.4]} scale={[0.15, 0.15, 0.9]} line={2} />
       <Toon geometry={G.box} color="#2a2420" scale={[0.8, 1.1, 0.8]} line={3} />

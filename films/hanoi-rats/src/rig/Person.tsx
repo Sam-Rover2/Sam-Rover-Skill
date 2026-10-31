@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { G } from '../lib/geometry';
 import { flat } from '../lib/materials';
 import { LINE, P } from '../lib/style';
@@ -58,18 +59,25 @@ const ink = () => flat(LINE.color);
 /** face decal on the front of the white head */
 const onHead = (x: number, y: number, lift = 0.01): V3 => [x, y, Math.sqrt(Math.max(0, HEAD * HEAD - x * x - y * y)) * 0.97 + lift];
 
+/** Rotation that lays a flat decal on the head sphere at (x, y) (its normal = the sphere normal). */
+const surfaceRot = (x: number, y: number): [number, number, number] => {
+  const n = new THREE.Vector3(...onHead(x, y)).normalize();
+  const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), n));
+  return [e.x, e.y, e.z];
+};
+
 const Eyes: React.FC<{ face: Face; look: [number, number]; glasses?: boolean }> = ({ face, look, glasses }) => {
   const big = face === 'panic' || face === 'o';
   return (
     <>
       {[-1, 1].map((s) => {
-        const p = onHead(s * 0.27, 0.12);
+        const p = onHead(s * 0.27, 0.12, 0.035);
         if (face === 'squint' || face === 'smug')
           return (
             <mesh key={s} geometry={G.stick} material={ink()} position={p} rotation={[0, 0, Math.PI / 2 + (face === 'smug' ? s * 0.12 : 0)]} scale={[0.028, 0.08, 0.028]} />
           );
         return (
-          <group key={s} position={p}>
+          <group key={s} position={p} rotation={surfaceRot(s * 0.27, 0.12)}>
             {big && <mesh geometry={G.disc} material={flat('#ffffff')} scale={0.17} />}
             {big && <mesh geometry={G.thinRing} material={ink()} scale={0.17} />}
             <mesh geometry={G.sphere} material={ink()} position={[look[0] * 0.04, look[1] * 0.04, 0.01]} scale={big ? [0.06, 0.06, 0.03] : [0.07, 0.095, 0.035]} />
@@ -87,7 +95,7 @@ const Eyes: React.FC<{ face: Face; look: [number, number]; glasses?: boolean }> 
         );
       })}
       {glasses &&
-        [-1, 1].map((s) => <mesh key={s} geometry={G.ring} material={ink()} position={onHead(s * 0.27, 0.12, 0.05)} scale={0.15} />)}
+        [-1, 1].map((s) => <mesh key={s} geometry={G.ring} material={ink()} position={onHead(s * 0.27, 0.12, 0.07)} rotation={surfaceRot(s * 0.27, 0.12)} scale={0.15} />)}
     </>
   );
 };
