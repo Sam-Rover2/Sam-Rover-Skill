@@ -1,6 +1,6 @@
 import { AbsoluteFill, Audio, staticFile } from 'remotion';
 import { useT } from '../cast';
-import { Captions } from '../lib/Captions';
+import { Captions2 } from './Captions2';
 import { clamp01 } from '../lib/anim';
 import { WORDS } from '../film/words';
 import { SHOTS } from './shots';
@@ -17,7 +17,7 @@ export const Movie2: React.FC = () => {
     <AbsoluteFill style={{ background: '#000' }}>
       <Audio src={staticFile('audio/voice.mp3')} />
       <s.C t={t} k={k} />
-      <Captions phrases={WORDS} />
+      <Captions2 words={WORDS} />
       {fade > 0 && <AbsoluteFill style={{ background: '#000', opacity: fade }} />}
     </AbsoluteFill>
   );

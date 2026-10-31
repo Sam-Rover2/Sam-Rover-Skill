@@ -7,7 +7,8 @@ import { useThree } from '@react-three/fiber';
 import { ThreeCanvas } from '@remotion/three';
 import { useLayoutEffect } from 'react';
 import * as THREE from 'three';
-import { AbsoluteFill, useVideoConfig } from 'remotion';
+import { AbsoluteFill, useCurrentFrame, useVideoConfig } from 'remotion';
+import { InkPass } from './InkPass';
 import { G } from '../lib/geometry';
 import { canvasTex, plasterTex, stoneTex, woodTex } from '../lib/tex';
 import { Toon, type V3 } from '../lib/Toon';
@@ -63,10 +64,13 @@ export interface Lamp {
 
 /** One shot: canvas, light preset, extra lamps, camera move a→b (k = progress 0..1). */
 export const Shot: React.FC<{ light: Light; a: Frame; b?: Frame; k: number; lamps?: Lamp[]; children: React.ReactNode }> = ({ light, a, b, k, lamps = [], children }) => {
-  const { width, height } = useVideoConfig();
+  const { width, height, fps } = useVideoConfig();
+  const frame = useCurrentFrame();
   return (
     <AbsoluteFill style={{ background: light.bg }}>
       <ThreeCanvas width={width} height={height} linear={false}>
+        <color attach="background" args={[light.bg]} />
+        <InkPass seed={Math.floor((frame * 12) / fps) % 8} />
         <Rig a={a} b={b ?? a} k={k} />
         {light.fog && <fog attach="fog" args={light.fog} />}
         <ambientLight color={light.amb[0]} intensity={light.amb[1]} />
@@ -77,8 +81,6 @@ export const Shot: React.FC<{ light: Light; a: Frame; b?: Frame; k: number; lamp
         ))}
         {children}
       </ThreeCanvas>
-      {/* soft vignette like the references */}
-      <AbsoluteFill style={{ background: 'radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 60%, rgba(0,0,0,.28) 100%)' }} />
     </AbsoluteFill>
   );
 };
