@@ -340,7 +340,7 @@ const Lights: React.FC<{ l: NonNullable<Item['light']>; bg: string }> = ({ l, bg
   const { scene } = useThree();
   useEffect(() => {
     scene.background = new THREE.Color(bg);
-    scene.fog = l.fog ? new THREE.Fog(l.fog[0], l.fog[1] * 2, l.fog[2] * 2) : null;
+    scene.fog = l.fog ? new THREE.Fog(l.fog[0], l.fog[1], l.fog[2]) : null; // same fog as in the film
   }, [scene, l, bg]);
   return (
     <>

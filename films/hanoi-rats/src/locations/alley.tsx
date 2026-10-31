@@ -48,7 +48,7 @@ export const AlleySet: React.FC = () => {
     <>
       <SkyBackdrop colors={['#0e1430', '#1a2450', '#2a3668']} y={40} h={150} sun={{ pos: [10, 36], r: 4, color: '#f3efd8' }} />
       <group name="Земля вокруг">
-        <Toon geometry={G.box} color="#2a2a30" position={[0, -0.6, 0]} scale={[700, 1, 700]} line={0} />
+        <Toon geometry={G.box} color="#2a2a30" position={[0, -0.6, 0]} scale={[2000, 1, 2000]} line={0} />
       </group>
       <group name="Мостовая">
         <Tx geometry={plane} map={stoneTex('#5c5a60', [30, 4], 24)} position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[LEN, AW * 2, 1]} line={0} />
@@ -72,6 +72,21 @@ export const AlleySet: React.FC = () => {
               );
             }),
           )}
+        </group>
+      ))}
+      {/* both ends of the alley are closed by houses: no open edge, no view into emptiness */}
+      {[-1, 1].map((s) => (
+        <group key={s} name={s < 0 ? 'Дом в начале переулка' : 'Дом в конце переулка'} position={[s * (LEN / 2 + 2), 0, 0]} rotation={[0, s < 0 ? Math.PI / 2 : -Math.PI / 2, 0]}>
+          <Tx geometry={box} map={plasterTex('#5e5446', [3, 2])} position={[0, 13, -2]} scale={[AW * 2 + 8, 26, 4]} line={4} />
+          {[-3, 0, 3].map((x, i) =>
+            [6, 12, 18].map((y, k) => (
+              <group key={`${x}${y}`} position={[x, y, 0.02]}>
+                <Toon geometry={G.box} color="#3a2e24" scale={[1.8, 2.6, 0.2]} line={2} />
+                <Glow geometry={plane} color={(i + k) % 2 ? '#ffcf70' : '#1a1c26'} position={[0, 0, 0.12]} scale={[1.4, 2.2, 1]} />
+              </group>
+            )),
+          )}
+          <Toon geometry={G.box} color="#3a2a20" position={[0, 2.8, 0.05]} scale={[3, 5.6, 0.2]} line={3} />
         </group>
       ))}
       <group name="Дверь со светом" position={[-10, 0, -AW + 0.05]}>

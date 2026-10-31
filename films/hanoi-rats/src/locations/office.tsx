@@ -158,7 +158,7 @@ export const OfficeSet: React.FC = () => {
       <group name="Гора хвостов" position={[9.5, 0, -6.5]}>
         <Pile />
       </group>
-      <group name="Мешок денег" position={[2.2, BODY.waist, -7.3]}>
+      <group name="Мешок денег" position={[0.15, BODY.waist, -7.55]} rotation={[0, 0.4, 0]}>
         <Coins />
       </group>
       <group name="Дверь" position={[W / 2 - 0.3, 0, 7]}>

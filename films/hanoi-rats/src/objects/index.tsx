@@ -116,11 +116,17 @@ const Filler: React.FC<{ geometry: THREE.BufferGeometry; position?: V3; scale?: 
 export const GroundFit: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const g = useRef<THREE.Group>(null);
   useLayoutEffect(() => {
-    if (!g.current) return;
-    g.current.position.y = 0;
-    g.current.updateMatrixWorld(true);
-    const b = new THREE.Box3().setFromObject(g.current);
-    if (!b.isEmpty()) g.current.position.y = -b.min.y;
+    const grp = g.current;
+    if (!grp) return;
+    grp.position.y = 0;
+    grp.updateWorldMatrix(true, true);
+    const b = new THREE.Box3().setFromObject(grp);
+    if (b.isEmpty()) return;
+    // compare with the PARENT's origin (where the object was placed), not with world y = 0:
+    // a bag put on a desk must stay on the desk
+    const base = new THREE.Vector3();
+    grp.parent?.getWorldPosition(base);
+    grp.position.y = base.y - b.min.y;
   });
   return <group ref={g}>{children}</group>;
 };
