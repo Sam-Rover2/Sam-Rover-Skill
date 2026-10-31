@@ -146,11 +146,14 @@ const HatMesh: React.FC<{ hat: Hat; color?: string }> = ({ hat, color }) => {
           ))}
         </group>
       );
-    case 'cap':
+    case 'cap': // flat newsboy cap sitting ON the head, with a visible brim
       return (
-        <group position={[0, HEAD * 0.6, 0]}>
-          <Toon geometry={G.hemi} color={color ?? '#6b5444'} scale={[HEAD * 0.95, HEAD * 0.6, HEAD * 0.95]} />
-          <Toon geometry={G.box} color={color ?? '#6b5444'} position={[0, 0.02, HEAD * 0.85]} scale={[HEAD * 1.0, 0.05, 0.5]} line={3} />
+        <group position={[0, HEAD * 0.7, 0.02]}>
+          <Toon geometry={G.sphere} color={color ?? '#6b5444'} scale={[HEAD * 0.92, HEAD * 0.32, HEAD * 0.98]} />
+          <Toon geometry={G.cyl} color={color ?? '#6b5444'} position={[0, -0.05, 0]} scale={[HEAD * 0.86, 0.12, HEAD * 0.9]} line={3} />
+          <Toon geometry={G.sphere} color={color ?? '#6b5444'} position={[0, HEAD * 0.3, 0]} scale={0.07} line={2} />
+          {/* brim sticks out in front of the forehead */}
+          <Toon geometry={G.hemi} color="#4f3d30" position={[0, -0.1, HEAD * 0.62]} rotation={[0.25, 0, 0]} scale={[HEAD * 0.85, 0.07, HEAD * 0.75]} line={4} />
         </group>
       );
     default:
@@ -291,14 +294,21 @@ export const Rat: React.FC<{ pose?: RatPose; scale?: number }> = ({ pose = {}, s
               <mesh geometry={G.disc} material={flat(pink)} position={[0, 0, 0.052]} scale={[0.09, 0.11, 1]} />
             </group>
           ))}
-          {[-1, 1].map((s) => (
-            <group key={s} position={[s * 0.1, 0.06, 0.22]}>
-              <mesh geometry={G.disc} material={flat('#ffffff')} scale={face === 'scared' ? 0.075 : 0.06} />
-              <mesh geometry={G.thinRing} material={ink()} scale={face === 'scared' ? 0.075 : 0.06} />
-              <mesh geometry={G.disc} material={ink()} position={[0, face === 'sly' ? -0.015 : 0, 0.003]} scale={face === 'scared' ? 0.025 : 0.035} />
-              {face === 'sly' && <mesh geometry={G.stick} material={ink()} position={[0, 0.045, 0.006]} rotation={[0, 0, Math.PI / 2 + s * -0.3]} scale={[0.012, 0.05, 0.012]} />}
-            </group>
-          ))}
+          {/* eyes: white eyeballs that sit ON the head (not decals sunk into it) */}
+          {[-1, 1].map((s) => {
+            const r = face === 'scared' ? 0.085 : 0.075;
+            return (
+              <group key={s} position={[s * 0.11, 0.07, 0.2]} rotation={[0, s * 0.35, 0]}>
+                <Toon geometry={G.sphere} color="#ffffff" scale={[r, r * 1.1, r * 0.7]} line={3} />
+                <mesh geometry={G.sphere} material={ink()} position={[0, face === 'sly' ? -0.012 : 0, r * 0.62]} scale={[r * 0.5, r * 0.6, r * 0.2]} />
+                <mesh geometry={G.disc} material={flat('#ffffff')} position={[r * 0.18, r * 0.25, r * 0.75]} scale={r * 0.18} />
+                {face === 'sly' && (
+                  /* heavy lid for the sly look: covers the top of the eye, does not cross it */
+                  <Toon geometry={G.hemi} color={c} position={[0, 0, 0]} rotation={[0.35, 0, 0]} scale={[r * 1.08, r * 1.2, r * 0.8]} line={3} />
+                )}
+              </group>
+            );
+          })}
           {/* whiskers */}
           {[-1, 1].map((s) =>
             [-0.04, 0.02].map((y) => (
