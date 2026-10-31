@@ -296,6 +296,16 @@ const App: React.FC = () => {
           </section>
         ))}
         <button className="copy" onClick={copyAll}>📋 Скопировать все правки</button>
+        <button
+          className="clear"
+          onClick={() => {
+            const n = Object.values(notes).filter((v) => v?.trim()).length;
+            if (!n) return alert('Правок нет — очищать нечего.');
+            if (confirm(`Удалить все правки (${n} шт.) во всех этапах?`)) setNotes({});
+          }}
+        >
+          🗑 Очистить все правки
+        </button>
       </aside>
       <main>
         <Canvas camera={{ fov: 40, near: 0.1, far: 800, position: item.home.pos }} gl={{ antialias: true }}>
