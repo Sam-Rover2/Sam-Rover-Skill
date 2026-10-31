@@ -9,8 +9,9 @@ export const PROJECT = {
   title: 'Новый ролик',
   fps: 120, // final render
   previewFps: 30, // fast preview in the player
-  width: 1920,
-  height: 1080,
+  // vertical 9:16 like the reference films (references/REFERENCE.md); use 1920×1080 for horizontal
+  width: 1080,
+  height: 1920,
 };
 
 /* ---------- Stage 1: characters ---------- */
