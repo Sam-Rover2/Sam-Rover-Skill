@@ -101,3 +101,100 @@ export function shade(hex: string, d: number) {
   const c = (v: number) => Math.max(0, Math.min(255, v + d));
   return `#${[(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => c(v).toString(16).padStart(2, '0')).join('')}`;
 }
+
+/** Weathered lime plaster: base colour, soft stains and drips. */
+export const plasterTex = (base: string, repeat: [number, number] = [1, 1]) =>
+  canvasTex(`plaster-${base}`, 256, 256, (g, w, h) => {
+    g.fillStyle = base;
+    g.fillRect(0, 0, w, h);
+    seed = 17;
+    for (let i = 0; i < 26; i++) {
+      const x = rnd() * w;
+      const y = rnd() * h;
+      const r = 10 + rnd() * 40;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, rnd() > 0.5 ? 'rgba(80,50,20,0.12)' : 'rgba(255,255,255,0.10)');
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = gr;
+      g.fillRect(x - r, y - r, r * 2, r * 2);
+    }
+    g.strokeStyle = 'rgba(70,45,20,0.15)';
+    for (let i = 0; i < 10; i++) {
+      const x = rnd() * w;
+      g.lineWidth = 1 + rnd() * 2;
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + (rnd() - 0.5) * 6, 30 + rnd() * 70);
+      g.stroke();
+    }
+  }, repeat);
+
+/** Terracotta roof tiles (rows of curved tiles). */
+export const roofTex = (repeat: [number, number] = [4, 4]) =>
+  canvasTex('roof', 128, 128, (g, w, h) => {
+    g.fillStyle = '#a8492e';
+    g.fillRect(0, 0, w, h);
+    for (let y = 0; y < h; y += 16)
+      for (let x = (y / 16) % 2 ? -8 : 0; x < w; x += 16) {
+        const gr = g.createLinearGradient(x, 0, x + 16, 0);
+        gr.addColorStop(0, '#8e3a22');
+        gr.addColorStop(0.5, '#c4603e');
+        gr.addColorStop(1, '#8e3a22');
+        g.fillStyle = gr;
+        g.fillRect(x + 1, y, 14, 15);
+        g.fillStyle = 'rgba(40,15,5,0.45)';
+        g.fillRect(x, y + 14, 16, 2);
+      }
+  }, repeat);
+
+/** Packed dirt road with ruts and pebbles. */
+export const dirtTex = (repeat: [number, number] = [8, 8]) =>
+  canvasTex('dirt', 256, 256, (g, w, h) => {
+    g.fillStyle = '#b59a72';
+    g.fillRect(0, 0, w, h);
+    seed = 23;
+    for (let i = 0; i < 700; i++) {
+      g.fillStyle = rnd() > 0.5 ? 'rgba(90,65,35,0.18)' : 'rgba(240,225,195,0.18)';
+      const s = 1 + rnd() * 4;
+      g.fillRect(rnd() * w, rnd() * h, s, s);
+    }
+    g.strokeStyle = 'rgba(90,65,35,0.18)';
+    g.lineWidth = 6;
+    for (const x of [w * 0.3, w * 0.7]) {
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + 6, h);
+      g.stroke();
+    }
+  }, repeat);
+
+/** Stone slabs / cobbles. */
+export const stoneTex = (base = '#a9a294', repeat: [number, number] = [6, 6], cell = 32) =>
+  canvasTex(`stone-${base}-${cell}`, 128, 128, (g, w, h) => {
+    g.fillStyle = base;
+    g.fillRect(0, 0, w, h);
+    seed = 29;
+    for (let y = 0; y < h; y += cell)
+      for (let x = (y / cell) % 2 ? -cell / 2 : 0; x < w; x += cell) {
+        g.fillStyle = shade(base, Math.round((rnd() - 0.5) * 24));
+        g.fillRect(x + 2, y + 2, cell - 4, cell - 4);
+      }
+  }, repeat);
+
+/** Vertical shop sign (Vietnamese characters on red or black lacquer). */
+export const signTex = (key: string, lines: string[], bg = '#8a1c14', fg = '#f2c94c') =>
+  canvasTex(`sign-${key}`, 128, 512, (g, w, h) => {
+    g.fillStyle = bg;
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = fg;
+    g.lineWidth = 8;
+    g.strokeRect(8, 8, w - 16, h - 16);
+    g.fillStyle = fg;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    const step = (h - 60) / lines.length;
+    lines.forEach((t, i) => {
+      g.font = `900 ${Math.min(64, step * 0.8)}px Georgia, serif`;
+      g.fillText(t, w / 2, 30 + step * (i + 0.5), w - 24);
+    });
+  });

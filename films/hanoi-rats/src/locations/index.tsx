@@ -1,11 +1,14 @@
 import { keys } from '../lib/anim';
-import { LIGHTS2, Stage } from '../lib/Stage';
+import { LIGHTS2, Stage, type LightPreset } from '../lib/Stage';
+import { StreetSet as HanoiStreet } from './street';
 import { P, SIZE } from '../lib/style';
 import { Flat } from '../lib/Toon';
 import { Building } from '../props/Big';
 import { Shadow, StreetLamp, Tree } from '../props/Props';
 import { SkyBackdrop } from '../props/Sky';
 import { useT } from '../cast';
+import { Actor } from '../rig/Actor';
+import { CAST } from '../project';
 
 /**
  * Stage 2: locations. Each location is a set WITHOUT the story action, shown with a slow
@@ -16,8 +19,12 @@ export interface Location {
   name: string;
   status: 'draft' | 'approved';
   Set: React.FC; // the static set (reused later by the parts)
-  light: (typeof LIGHTS2)[keyof typeof LIGHTS2];
+  light: LightPreset;
   bg: string;
+  /** start camera for review / turntable */
+  home: { pos: [number, number, number]; target: [number, number, number] };
+  /** where a person stands for scale in the review */
+  scalePos?: [number, number, number];
 }
 
 const StreetSet: React.FC = () => (
@@ -32,18 +39,37 @@ const StreetSet: React.FC = () => (
   </>
 );
 
-/** Filled in at stage 3. StreetSet above is only a template example. */
-export const LOCATIONS: Location[] = [];
 void StreetSet;
+void LIGHTS2;
+
+export const LOCATIONS: Location[] = [
+  {
+    id: 'street',
+    name: 'Улица старого Ханоя, 1902 (утро)',
+    status: 'draft',
+    Set: HanoiStreet,
+    light: { ambient: '#fff1dc', ambientI: 1.45, sun: '#ffe0b0', sunI: 2.3, sunPos: [-12, 18, 10], fog: ['#efdcbc', 70, 200] },
+    bg: '#cfe3f3',
+    home: { pos: [-22, 5.5, 0.5], target: [10, 5.5, 0] },
+    scalePos: [-3, 0, -2.6],
+  },
+];
 
 /** Turntable preview of a location: camera slowly circles the set. */
 export const LocationPreview: React.FC<{ id: string }> = ({ id }) => {
   const t = useT();
   const loc = LOCATIONS.find((l) => l.id === id)!;
-  const a = keys(t, [[0, -0.5], [8, 0.5]]);
+  const k = keys(t, [[0, 0], [8, 1]]);
+  const [px, py, pz] = loc.home.pos;
+  const [tx, ty, tz] = loc.home.target;
   return (
-    <Stage light={loc.light} background={loc.bg} cam={{ pos: [Math.sin(a) * 30, 7, Math.cos(a) * 30], target: [0, 5, 0], fov: 36, t }}>
+    <Stage light={loc.light} background={loc.bg} cam={{ pos: [px + k * 14, py, pz], target: [tx + k * 14, ty, tz], fov: 40, t }}>
       <loc.Set />
+      {loc.scalePos && (
+        <group position={loc.scalePos} rotation={[0, 0.6, 0]}>
+          <Actor c={CAST[0]} />
+        </group>
+      )}
     </Stage>
   );
 };

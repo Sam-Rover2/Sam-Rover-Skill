@@ -78,8 +78,18 @@ const items: Item[] = [
     status: l.status,
     light: l.light as Item['light'],
     bg: l.bg,
-    home: { pos: [10, 7, 28] as V3, target: [0, 4, 0] as V3 },
-    render: () => <l.Set />,
+    home: l.home as { pos: V3; target: V3 },
+    render: () => (
+      <>
+        <l.Set />
+        {l.scalePos && (
+          <group position={l.scalePos} rotation={[0, 0.6, 0]}>
+            <Shadow r={0.9} />
+            <Actor c={CAST[0]} />
+          </group>
+        )}
+      </>
+    ),
   })),
   ...STAGINGS.map((s) => {
     const loc = LOCATIONS.find((l) => l.id === s.location)!;
