@@ -51,7 +51,7 @@ export const LOCATIONS: Location[] = [
     light: { ambient: '#fff1dc', ambientI: 1.45, sun: '#ffe0b0', sunI: 2.3, sunPos: [-12, 18, 10], fog: ['#efdcbc', 70, 200] },
     bg: '#cfe3f3',
     home: { pos: [-22, 5.5, 0.5], target: [10, 5.5, 0] },
-    scalePos: [-3, 0, -2.6],
+    scalePos: [-3, 0, -4],
   },
 ];
 

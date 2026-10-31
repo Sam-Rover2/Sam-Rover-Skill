@@ -254,7 +254,7 @@ const LanternString: React.FC<{ x: number; y: number; span: number }> = ({ x, y,
 );
 
 const Basket: React.FC<{ position: V3; fill?: string }> = ({ position, fill = '#e2572f' }) => (
-  <group position={position}>
+  <group name="Корзина" position={position}>
     <Toon geometry={G.pot} color="#c9a46a" position={[0, 0.35, 0]} scale={[0.55, 0.7, 0.55]} line={3} />
     {[0, 1, 2, 3].map((k) => (
       <Toon key={k} geometry={G.sphere} color={fill} position={[Math.cos(k * 1.6) * 0.25, 0.75, Math.sin(k * 1.6) * 0.25]} scale={0.2} line={2} />
@@ -270,8 +270,8 @@ export const StreetSet: React.FC = () => {
   const Manhole = obj('manhole');
   const Rice = obj('rice');
   const Lantern = obj('lantern');
-  const SW = 4.5; // sidewalk width
-  const HZ = 8.5; // house front z (both sides)
+  const SW = 6; // sidewalk width (trees fit with room to walk)
+  const HZ = 14; // house front z (both sides): road ≈ 16 units wide
   const left: [number, number, number, string, string, 'tile' | 'flat', string, string, string, 'rice' | 'baskets' | 'jars' | 'cloth', string[]?, boolean?][] = [
     // x, w, floors, colour, shutter, roof, sign, signBg, awning, goods, vertical sign, year
     [-42, 10, 3, '#e3b85a', '#3f7a5a', 'flat', 'TIỆM GẠO', '#8a1c14', '#c8302c', 'rice', ['GẠO', 'NGON'], false],
@@ -286,9 +286,11 @@ export const StreetSet: React.FC = () => {
     <>
       <SkyBackdrop colors={['#86b8e6', '#a9cdef', '#d6e9f7', '#f3e6c8']} y={40} h={150} />
       {/* ground: dirt road, stone sidewalks with curbs, gutters */}
-      <Tx geometry={plane} map={dirtTex([10, 3])} position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[200, 2 * (HZ - SW), 1]} line={0} />
+      <group name="Дорога">
+        <Tx geometry={plane} map={dirtTex([10, 3])} position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[200, 2 * (HZ - SW), 1]} line={0} />
+      </group>
       {[-1, 1].map((s) => (
-        <group key={s}>
+        <group key={s} name={s < 0 ? 'Тротуар левый' : 'Тротуар правый'}>
           <Tx geometry={box} map={stoneTex('#b3ab9c', [40, 2])} position={[0, 0.15, s * (HZ - SW / 2)]} scale={[200, 0.3, SW]} line={0} />
           <Toon geometry={G.box} color="#8f877a" position={[0, 0.18, s * (HZ - SW)]} scale={[200, 0.36, 0.35]} line={2} />
           <mesh geometry={plane} material={flat('#5a5040')} position={[0, 0.01, s * (HZ - SW - 0.45)]} rotation={[-Math.PI / 2, 0, 0]} scale={[200, 0.5, 1]} />
@@ -296,53 +298,57 @@ export const StreetSet: React.FC = () => {
       ))}
       {/* houses: one row each side, facing the street */}
       {left.map(([x, w, fl, c, sh, rf, sg, sb, aw, gd, vs, yr], i) => (
-        <group key={`L${i}`} position={[x, 0.3, -HZ]}>
+        <group key={`L${i}`} name={`Дом L${i + 1} «${sg}»`} position={[x, 0.3, -HZ]}>
           <TubeHouse w={w} floors={fl} color={c} shutter={sh} roof={rf} sign={sg} signBg={sb} awning={aw} goods={gd} vSign={vs} year={yr} />
         </group>
       ))}
       {left.map(([x, w, fl, c, sh, rf, sg, sb, aw, gd, vs], i) => (
-        <group key={`R${i}`} position={[x + 5, 0.3, HZ]} rotation={[0, Math.PI, 0]}>
+        <group key={`R${i}`} name={`Дом R${i + 1} «${left[(i + 2) % left.length][6]}»`} position={[x + 5, 0.3, HZ]} rotation={[0, Math.PI, 0]}>
           <TubeHouse w={w} floors={((fl + i) % 2) + 2} color={left[(i + 3) % left.length][3]} shutter={sh} roof={rf === 'tile' ? 'flat' : 'tile'} sign={left[(i + 2) % left.length][6]} signBg={sb} awning={aw} goods={left[(i + 1) % left.length][9]} vSign={vs} />
         </group>
       ))}
       {/* trees, poles + wires, lantern strings */}
-      {[-36, -14, 8, 30].map((x) => (
-        <group key={x}>
-          <Tree position={[x, 0.3, -HZ + 2.2]} scale={2.6} colors={['#4f9d4a', '#3c7f3a']} />
-          <Shadow position={[x, 0.31, -HZ + 2.2]} r={2.4} opacity={0.15} />
+      {[-36, -14, 8, 30].map((x, i) => (
+        <group key={x} name={`Дерево ${i + 1}`}>
+          <Tree position={[x, 0.3, -HZ + SW / 2]} scale={2.6} colors={['#4f9d4a', '#3c7f3a']} />
+          <Shadow position={[x, 0.31, -HZ + SW / 2]} r={2.4} opacity={0.15} />
         </group>
       ))}
       {[-44, -24, -4, 16, 36].map((x, i, a) => (
-        <Pole key={x} x={x} z={HZ - 1.2} next={a[i + 1]} />
+        <group key={x} name={`Столб ${i + 1}`}>
+          <Pole x={x} z={HZ - 1.2} next={a[i + 1]} />
+        </group>
       ))}
-      {[-26, -4, 18].map((x) => (
-        <LanternString key={x} x={x} y={11.5} span={2 * HZ - 1} />
+      {[-26, -4, 18].map((x, i) => (
+        <group key={x} name={`Гирлянда фонариков ${i + 1}`}>
+          <LanternString x={x} y={11.5} span={2 * HZ - 1} />
+        </group>
       ))}
       {/* street props: rickshaw, manhole, rice sacks, baskets, lantern post */}
-      <group position={[6, 0, -2.6]} rotation={[0, -1.2, 0]}>
+      <group name="Рикша" position={[6, 0, -4]} rotation={[0, -1.2, 0]}>
         <Rickshaw />
       </group>
-      <group position={[3, 0.005, -0.5]} rotation={[0, -Math.PI / 2, 0]}>
+      <group name="Люк" position={[3, 0.005, -0.5]} rotation={[0, -Math.PI / 2, 0]}>
         <Manhole />
       </group>
-      <group position={[-40, 0.3, -HZ + 2.8]}>
+      <group name="Мешок риса 1" position={[-40, 0.3, -HZ + 2.8]}>
         <Rice />
       </group>
-      <group position={[-38.2, 0.3, -HZ + 2.6]} rotation={[0, 0.6, 0]}>
+      <group name="Мешок риса 2" position={[-38.2, 0.3, -HZ + 2.6]} rotation={[0, 0.6, 0]}>
         <Rice />
       </group>
       <Basket position={[-30, 0.3, -HZ + 2.4]} />
       <Basket position={[-28.8, 0.3, -HZ + 2.9]} fill="#f2b233" />
       <Basket position={[24.5, 0.3, HZ - 2.4]} fill="#5fa85a" />
-      <group position={[-17, 0.3, -HZ + 3.6]}>
+      <group name="Фонарь 1" position={[-17, 0.3, -HZ + 4.6]}>
         <Lantern />
       </group>
-      <group position={[20, 0.3, HZ - 3.4]} rotation={[0, Math.PI, 0]}>
+      <group name="Фонарь 2" position={[20, 0.3, HZ - 4.6]} rotation={[0, Math.PI, 0]}>
         <Lantern />
       </group>
       {/* far end of the street: a colonial building closing the view */}
-      <group position={[60, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <TubeHouse w={22} floors={3} color="#efe0b0" shutter="#3f7a5a" roof="flat" sign="POSTE · BƯU ĐIỆN" signBg="#2a3a6a" awning="#2f4a8a" goods="cloth" year />
+      <group name="Почта (конец улицы)" position={[60, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        <TubeHouse w={34} floors={3} color="#efe0b0" shutter="#3f7a5a" roof="flat" sign="POSTE · BƯU ĐIỆN" signBg="#2a3a6a" awning="#2f4a8a" goods="cloth" year />
       </group>
     </>
   );
