@@ -1,5 +1,6 @@
 import { Composition, Folder } from 'remotion';
 import { Film, filmParts } from './Film';
+import { FILM_SECONDS, Movie } from './film/Movie';
 import { LOCATIONS, LocationPreview } from './locations';
 import { PARTS } from './parts';
 import { PROJECT } from './project';
@@ -43,6 +44,8 @@ export const Root: React.FC = () => (
       ))}
     </Folder>
     <Folder name="6-Film">
+      {/* the whole film in one go, light 30 fps for watching in the player */}
+      <Composition id="film-preview" component={Movie} durationInFrames={Math.round(FILM_SECONDS * pf)} fps={pf} width={width} height={height} />
       <Composition id="film" component={Film} durationInFrames={Math.max(1, Math.round(total() * fps))} fps={fps} width={width} height={height} />
     </Folder>
   </>

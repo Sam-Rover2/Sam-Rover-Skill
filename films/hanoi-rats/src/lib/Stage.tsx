@@ -23,14 +23,17 @@ export interface Cam {
   /** Handheld shake amplitude in units (0 = locked-off). */
   shake?: number;
   t?: number;
+  /** Dutch angle (radians around the view axis). */
+  roll?: number;
 }
 
-const Rig: React.FC<Cam> = ({ pos, target, fov = 32, shake = 0, t = 0 }) => {
+const Rig: React.FC<Cam> = ({ pos, target, fov = 32, shake = 0, t = 0, roll = 0 }) => {
   const camera = useThree((s) => s.camera);
   useLayoutEffect(() => {
-    const n = (seed: number) => noise(t * 0.7, seed) * shake;
+    const n = (seed: number) => (noise(t * 0.7, seed) + noise(t * 9, seed + 5) * Math.min(1, shake * 2)) * shake;
     camera.position.set(pos[0] + n(1), pos[1] + n(2), pos[2]);
     camera.lookAt(target[0] + n(3) * 0.5, target[1] + n(4) * 0.5, target[2]);
+    if (roll) camera.rotateZ(roll);
     if ('fov' in camera) {
       camera.fov = fov;
       camera.near = 0.1;

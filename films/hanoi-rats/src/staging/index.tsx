@@ -33,29 +33,29 @@ const O = (id: string) => OBJECTS.find((o) => o.id === id)!.C;
 const Notebook = O('notebook');
 const Magnifier = O('magnifier');
 const Scissors = O('scissors');
-const HeldNotebook = () => (
+export const HeldNotebook = () => (
   <group scale={0.8} rotation={[0.2, 0, 0]}>
     <Notebook />
   </group>
 );
-const HeldMagnifier = () => (
+export const HeldMagnifier = () => (
   <group scale={0.55} rotation={[0.6, 0, 0]}>
     <Magnifier />
   </group>
 );
-const HeldScissors = () => (
+export const HeldScissors = () => (
   <group scale={0.55} rotation={[0.4, 0, -0.6]}>
     <Scissors />
   </group>
 );
 /** a cut tail dangling from the fingers */
-const HeldTail = () => <Limb root={[0, 0, 0.05]} tip={[0.12, -0.75, 0.12]} length={0.85} bendDir={[1, 0, 0]} radius={0.03} color="#e99aa6" />;
+export const HeldTail = () => <Limb root={[0, 0, 0.05]} tip={[0.12, -0.75, 0.12]} length={0.85} bendDir={[1, 0, 0]} radius={0.03} color="#e99aa6" />;
 /** a coin between the fingers */
-const HeldCoin = () => <Toon geometry={G.cyl} color="#e0b84a" position={[0, 0.12, 0.05]} rotation={[Math.PI / 2, 0, 0]} scale={[0.12, 0.03, 0.12]} line={2} />;
+export const HeldCoin = () => <Toon geometry={G.cyl} color="#e0b84a" position={[0, 0.12, 0.05]} rotation={[Math.PI / 2, 0, 0]} scale={[0.12, 0.03, 0.12]} line={2} />;
 
 /* ---------- poses ---------- */
-const holdNotebook: PersonPose = { handL: [-0.25, 2.55, 0.6], handR: [0.2, 2.65, 0.65], holdL: <HeldNotebook /> };
-const crouch = (lean = 0.45): PersonPose => ({ hips: [0, -0.75, -0.2], lean, footL: [-0.35, 0.08, 0.55], footR: [0.35, 0.08, 0.35] });
+export const holdNotebook: PersonPose = { handL: [-0.25, 2.55, 0.6], handR: [0.2, 2.65, 0.65], holdL: <HeldNotebook /> };
+export const crouch = (lean = 0.45): PersonPose => ({ hips: [0, -0.75, -0.2], lean, footL: [-0.35, 0.08, 0.55], footR: [0.35, 0.08, 0.35] });
 
 /** A street full of rats: deterministic scatter on the road. */
 const ratsOnRoad = (n: number, x0: number, x1: number, zr: number, cut = 0.5) =>

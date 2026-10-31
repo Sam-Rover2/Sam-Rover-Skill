@@ -55,7 +55,8 @@ const Stanchion: React.FC<{ x: number; z: number }> = ({ x, z }) => (
   </group>
 );
 
-export const OfficeSet: React.FC = () => {
+/** poster=false: the film animates its own poster (torn down in part 3). */
+export const OfficeSet: React.FC<{ poster?: boolean }> = ({ poster = true }) => {
   const Desk = obj('desk');
   const Poster = obj('poster');
   const Sack = obj('sack');
@@ -101,9 +102,11 @@ export const OfficeSet: React.FC = () => {
       <group name="Стол чиновника" position={[0, 0, -7]}>
         <Desk />
       </group>
-      <group name="Плакат о награде" position={[-6.5, 0, -11]} rotation={[0, 0.15, 0]}>
-        <Poster />
-      </group>
+      {poster && (
+        <group name="Плакат о награде" position={[-6.5, 0, -11]} rotation={[0, 0.15, 0]}>
+          <Poster />
+        </group>
+      )}
       <group name="Карта Индокитая">
         <Tx geometry={box} map={labelTex('map', [{ text: 'INDOCHINE', size: 80 }, { text: 'FRANÇAISE', size: 60 }, { text: '— 1902 —', size: 40, font: 'italic 600' }], '#e9d9aa', '#3a5a3a')} position={[0, 8.2, -D / 2 + 0.35]} scale={[6, 4, 0.1]} line={3} />
       </group>

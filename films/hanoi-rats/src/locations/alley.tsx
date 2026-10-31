@@ -37,7 +37,8 @@ const Laundry: React.FC<{ x: number; y: number }> = ({ x, y }) => (
   </group>
 );
 
-export const AlleySet: React.FC = () => {
+/** open: 0 = manhole closed, 1 = cover pushed aside (dark hole visible). */
+export const AlleySet: React.FC<{ open?: number }> = ({ open = 0 }) => {
   const Manhole = obj('manhole');
   const Crate = obj('crate');
   const Trap = obj('trap');
@@ -95,7 +96,8 @@ export const AlleySet: React.FC = () => {
         <Glow geometry={plane} color="#ffcf70" opacity={0.25} position={[0.6, 0.03, 2.6]} rotation={[-Math.PI / 2, 0, 0]} scale={[2.2, 5, 1]} />
       </group>
       <group name="Люк">
-        <group position={[2, 0.02, 0]} rotation={[0, -Math.PI / 2, 0]}>
+        {open > 0 && <Glow geometry={G.disc} color="#030406" position={[2, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={0.95} />}
+        <group position={[2, 0.02 + open * 0.06, -open * 1.9]} rotation={[0, -Math.PI / 2 + open * 0.5, 0]}>
           <Manhole />
         </group>
       </group>
