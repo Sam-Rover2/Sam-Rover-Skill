@@ -1,5 +1,3 @@
-import { SIZE, P } from '../lib/style';
-import { Bench, Car, Plant, StreetLamp, Table, Chair } from '../props/Props';
 import { Model } from '../assets/Model';
 
 /**
@@ -15,18 +13,6 @@ export interface Obj {
   C: React.FC;
 }
 
-export const OBJECTS: Obj[] = [
-  { id: 'bench', name: 'Скамейка', status: 'draft', source: 'code', C: () => <Bench /> },
-  { id: 'car', name: 'Машина', status: 'draft', source: 'code', C: () => <Car color={P.teal} scale={SIZE.carScale} /> },
-  { id: 'lamp', name: 'Фонарь', status: 'draft', source: 'code', C: () => <StreetLamp scale={SIZE.lampScale} /> },
-  { id: 'cafe-set', name: 'Столик со стулом', status: 'draft', source: 'code', C: () => (
-    <group>
-      <Table round w={1.6} />
-      <Chair position={[-1.2, 0, 0]} rotation={[0, 1.4, 0]} />
-    </group>
-  ) },
-  { id: 'plant', name: 'Растение', status: 'draft', source: 'code', C: () => <Plant big /> },
-  // Imported model example (put the file into public/models/ and uncomment):
-  // { id: 'boat', name: 'Лодка (модель)', status: 'draft', source: 'model', C: () => <Model file="models/boat.glb" height={4.4} restyle="toon" /> },
-];
+/** Filled in at stage 2 (after the cast is approved). */
+export const OBJECTS: Obj[] = [];
 export { Model };

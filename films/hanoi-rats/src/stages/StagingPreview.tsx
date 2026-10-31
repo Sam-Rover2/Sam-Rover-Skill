@@ -1,6 +1,6 @@
 import { Series, useVideoConfig } from 'remotion';
 import { Stage } from '../lib/Stage';
-import { Character } from '../rig/Character';
+import { Actor } from '../rig/Actor';
 import { Shadow } from '../props/Props';
 import { LOCATIONS } from '../locations';
 import { OBJECTS } from '../objects';
@@ -27,7 +27,7 @@ const ShotView: React.FC<{ id: string; shot: Shot }> = ({ id, shot }) => {
       {s.actors.map((a, i) => (
         <group key={i} position={a.pos} rotation={[0, a.rotY ?? 0, 0]}>
           <Shadow r={0.85} />
-          <Character look={CAST.find((c) => c.id === a.cast)!.look} pose={a.pose} />
+          <Actor c={CAST.find((c) => c.id === a.cast)!} pose={a.pose} />
         </group>
       ))}
     </Stage>

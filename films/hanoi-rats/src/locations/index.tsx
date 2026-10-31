@@ -32,7 +32,9 @@ const StreetSet: React.FC = () => (
   </>
 );
 
-export const LOCATIONS: Location[] = [{ id: 'street', name: 'Улица (пример)', status: 'draft', Set: StreetSet, light: LIGHTS2.morning, bg: P.skyDay[0] }];
+/** Filled in at stage 3. StreetSet above is only a template example. */
+export const LOCATIONS: Location[] = [];
+void StreetSet;
 
 /** Turntable preview of a location: camera slowly circles the set. */
 export const LocationPreview: React.FC<{ id: string }> = ({ id }) => {

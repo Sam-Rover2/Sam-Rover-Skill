@@ -19,7 +19,8 @@ const total = () => filmParts().reduce((s, p) => s + p.seconds, 0);
 export const Root: React.FC = () => (
   <>
     <Folder name="1-Characters">
-      <Composition id="cast" component={CastSheet} durationInFrames={pf * 8} fps={pf} width={width} height={height} />
+      {/* cast sheet is horizontal so everyone fits */}
+      <Composition id="cast" component={CastSheet} durationInFrames={pf * 8} fps={pf} width={1920} height={1080} />
     </Folder>
     <Folder name="2-Objects">
       {OBJECTS.map((o) => (
@@ -42,7 +43,7 @@ export const Root: React.FC = () => (
       ))}
     </Folder>
     <Folder name="6-Film">
-      <Composition id="film" component={Film} durationInFrames={Math.round(total() * fps)} fps={fps} width={width} height={height} />
+      <Composition id="film" component={Film} durationInFrames={Math.max(1, Math.round(total() * fps))} fps={fps} width={width} height={height} />
     </Folder>
   </>
 );

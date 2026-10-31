@@ -5,8 +5,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { setModelUrlResolver } from '../src/assets/Model';
 import { Flat } from '../src/lib/Toon';
-import { Character } from '../src/rig/Character';
-import { breathe } from '../src/rig/motion';
+import { Actor } from '../src/rig/Actor';
 import { Shadow } from '../src/props/Props';
 import { CAST, PROJECT } from '../src/project';
 import { OBJECTS } from '../src/objects';
@@ -29,14 +28,14 @@ const items: Item[] = [
     stage: '1 · Персонажи',
     title: 'Все персонажи',
     status: CAST.every((c) => c.status === 'approved') ? 'approved' : 'draft',
-    home: { pos: [0, 3, 6 + CAST.length * 2.6], target: [0, 2.2, 0] },
+    home: { pos: [0, 4, 6 + CAST.length * 2.2], target: [0, 2.4, 0] },
     render: () => (
       <>
         {floor}
         {CAST.map((c, i) => (
-          <group key={c.id} position={[(i - (CAST.length - 1) / 2) * 3.2, 0, 0]}>
+          <group key={c.id} position={[(i - (CAST.length - 1) / 2) * 2.7, 0, 0]}>
             <Shadow r={0.9} />
-            <Character look={c.look} pose={{ expr: 'smile' }} />
+            <Actor c={c} pose={{ face: 'smile' }} />
           </group>
         ))}
       </>
@@ -47,12 +46,12 @@ const items: Item[] = [
     stage: '1 · Персонажи',
     title: `${c.name} — ${c.role}`,
     status: c.status,
-    home: { pos: [2, 3, 7] as V3, target: [0, 2.2, 0] as V3 },
+    home: (c.kind === 'rat' ? { pos: [1.5, 1.2, 3], target: [0, 0.4, 0] } : { pos: [2.5, 3.6, 9], target: [0, 2.6, 0] }) as { pos: V3; target: V3 },
     render: () => (
       <>
         {floor}
         <Shadow r={0.9} />
-        <Character look={c.look} pose={{ expr: 'smile', squash: breathe(0) }} />
+        <Actor c={c} pose={{ face: 'smile' }} />
       </>
     ),
   })),
@@ -106,7 +105,7 @@ const items: Item[] = [
           {s.actors.map((a, i) => (
             <group key={i} position={a.pos} rotation={[0, a.rotY ?? 0, 0]}>
               <Shadow r={0.85} />
-              <Character look={castById(a.cast).look} pose={a.pose} />
+              <Actor c={castById(a.cast)} pose={a.pose} />
             </group>
           ))}
         </>
@@ -130,7 +129,7 @@ const ScaleRef: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <group ref={obj}>{children}</group>
       <group ref={person} rotation={[0, 0.5, 0]}>
         <Shadow r={0.9} />
-        <Character look={CAST[0].look} pose={{ expr: 'smile' }} />
+        <Actor c={CAST[0]} />
       </group>
     </>
   );
