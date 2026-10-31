@@ -1,6 +1,10 @@
 import { keys } from '../lib/anim';
 import { LIGHTS2, Stage, type LightPreset } from '../lib/Stage';
 import { StreetSet as HanoiStreet } from './street';
+import { SewerSet } from './sewer';
+import { OfficeSet } from './office';
+import { AlleySet } from './alley';
+import { FarmSet } from './farm';
 import { P, SIZE } from '../lib/style';
 import { Flat } from '../lib/Toon';
 import { Building } from '../props/Big';
@@ -46,12 +50,52 @@ export const LOCATIONS: Location[] = [
   {
     id: 'street',
     name: 'Улица старого Ханоя, 1902 (утро)',
-    status: 'draft',
+    status: 'approved',
     Set: HanoiStreet,
     light: { ambient: '#fff1dc', ambientI: 1.45, sun: '#ffe0b0', sunI: 2.3, sunPos: [-12, 18, 10], fog: ['#efdcbc', 70, 200] },
     bg: '#cfe3f3',
     home: { pos: [-22, 5.5, 0.5], target: [10, 5.5, 0] },
     scalePos: [-3, 0, -4],
+  },
+  {
+    id: 'sewer',
+    name: 'Канализация под Ханоем',
+    status: 'draft',
+    Set: SewerSet,
+    light: { ambient: '#a8c8b0', ambientI: 1.0, sun: '#ffe2a8', sunI: 1.4, sunPos: [18, 30, -6], fog: ['#1c2a22', 28, 110] },
+    bg: '#1c2a22',
+    home: { pos: [-26, 4.2, 4.5], target: [10, 3.6, 0] },
+    scalePos: [-6, 0.6, -5.8],
+  },
+  {
+    id: 'office',
+    name: 'Пункт выдачи наград (день)',
+    status: 'draft',
+    Set: OfficeSet,
+    light: { ambient: '#fff3e0', ambientI: 1.45, sun: '#ffe6b8', sunI: 2.0, sunPos: [6, 18, 14] },
+    bg: '#efe2c0',
+    home: { pos: [0, 6.5, 22], target: [0, 4, -8] },
+    scalePos: [-2.5, 0, 4],
+  },
+  {
+    id: 'alley',
+    name: 'Ночная подворотня с люком',
+    status: 'draft',
+    Set: AlleySet,
+    light: { ambient: '#5a6aa8', ambientI: 1.05, sun: '#a8b8ff', sunI: 1.1, sunPos: [10, 40, 10], fog: ['#141a34', 30, 120] },
+    bg: '#141a34',
+    home: { pos: [-30, 5, 2], target: [6, 3, 0] },
+    scalePos: [-8, 0, 1.5],
+  },
+  {
+    id: 'farm',
+    name: 'Крысиная ферма на окраине (закат)',
+    status: 'draft',
+    Set: FarmSet,
+    light: { ambient: '#ffe0c8', ambientI: 1.35, sun: '#ffb070', sunI: 2.3, sunPos: [-30, 14, 20], fog: ['#f3b890', 80, 260] },
+    bg: '#f3b890',
+    home: { pos: [14, 7, 26], target: [0, 3.5, -4] },
+    scalePos: [4, 0, 5],
   },
 ];
 
