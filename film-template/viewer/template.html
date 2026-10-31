@@ -28,8 +28,24 @@
   .help { position:absolute; left:12px; bottom:132px; background:color-mix(in srgb, var(--card) 88%, transparent); border:1px solid var(--line); border-radius:10px; padding:6px 10px; color:var(--muted); }
   .notes { position:absolute; left:12px; right:12px; bottom:12px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:8px 10px; }
   .notes label { font-size:12px; color:var(--muted); } .notes textarea { width:100%; height:64px; border:0; resize:none; background:transparent; color:var(--fg); font:inherit; outline:none; }
+  .fallback { max-width:640px; margin:10vh auto; padding:24px; background:var(--card); border:1px solid var(--line); border-radius:16px; }
+  .fallback h1 { margin:0 0 8px; font-size:22px; } .err { color:var(--accent); font-weight:600; }
   @media (max-width: 760px) { .app { grid-template-columns: 1fr; grid-template-rows: 40% 60%; } aside { border-right:0; border-bottom:1px solid var(--line); } .help { display:none; } }
 </style>
 </head>
-<body><div id="root"></div><script>/*BUNDLE*/</script></body>
+<body>
+<div id="root">
+  <div class="fallback">
+    <h1>Файл согласования</h1>
+    <p>Если вы видите этот текст, 3D-просмотр не запустился.</p>
+    <p><b>Как открыть:</b> скачайте файл на компьютер и откройте его двойным кликом в <b>Chrome</b>, <b>Edge</b> или <b>Safari</b>.<br>Встроенный просмотр в приложениях и мессенджерах обычно не запускает такие файлы.</p>
+    <p id="errbox" class="err"></p>
+  </div>
+</div>
+<script>
+  window.addEventListener('error', function (e) { var b = document.getElementById('errbox'); if (b) b.textContent = 'Ошибка: ' + (e.message || e); });
+  (function () { try { var c = document.createElement('canvas'); if (!(c.getContext('webgl2') || c.getContext('webgl'))) { var b = document.getElementById('errbox'); if (b) b.textContent = 'Этот браузер не поддерживает 3D (WebGL). Откройте файл в свежем Chrome или Edge.'; window.__noWebGL = true; } } catch (e) {} })();
+</script>
+<script>/*BUNDLE*/</script>
+</body>
 </html>

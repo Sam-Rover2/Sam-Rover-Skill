@@ -324,4 +324,8 @@ const App: React.FC = () => {
   );
 };
 
-createRoot(document.getElementById('root')!).render(<App />);
+if (!(window as unknown as { __noWebGL?: boolean }).__noWebGL) {
+  const root = document.getElementById('root')!;
+  root.innerHTML = '';
+  createRoot(root).render(<App />);
+}
