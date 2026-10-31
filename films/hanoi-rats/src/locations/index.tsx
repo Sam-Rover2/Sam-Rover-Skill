@@ -21,7 +21,7 @@ import { CAST } from '../project';
 export interface Location {
   id: string;
   name: string;
-  status: 'draft' | 'approved';
+  status: 'approved' | 'approved';
   Set: React.FC; // the static set (reused later by the parts)
   light: LightPreset;
   bg: string;
@@ -60,7 +60,7 @@ export const LOCATIONS: Location[] = [
   {
     id: 'sewer',
     name: 'Канализация под Ханоем',
-    status: 'draft',
+    status: 'approved',
     Set: SewerSet,
     light: { ambient: '#a8c8b0', ambientI: 1.0, sun: '#ffe2a8', sunI: 1.4, sunPos: [18, 30, -6], fog: ['#0b120e', 16, 85] }, // dark haze: the tunnel fades into black
     bg: '#0b120e',
@@ -70,7 +70,7 @@ export const LOCATIONS: Location[] = [
   {
     id: 'office',
     name: 'Пункт выдачи наград (день)',
-    status: 'draft',
+    status: 'approved',
     Set: OfficeSet,
     light: { ambient: '#fff3e0', ambientI: 1.45, sun: '#ffe6b8', sunI: 2.0, sunPos: [6, 18, 14] },
     bg: '#efe2c0',
@@ -80,7 +80,7 @@ export const LOCATIONS: Location[] = [
   {
     id: 'alley',
     name: 'Ночная подворотня с люком',
-    status: 'draft',
+    status: 'approved',
     Set: AlleySet,
     light: { ambient: '#5a6aa8', ambientI: 1.05, sun: '#a8b8ff', sunI: 1.1, sunPos: [10, 40, 10], fog: ['#141a34', 18, 75] },
     bg: '#141a34',
@@ -90,7 +90,7 @@ export const LOCATIONS: Location[] = [
   {
     id: 'farm',
     name: 'Крысиная ферма на окраине (закат)',
-    status: 'draft',
+    status: 'approved',
     Set: FarmSet,
     light: { ambient: '#ffe0c8', ambientI: 1.35, sun: '#ffb070', sunI: 2.3, sunPos: [-30, 14, 20], fog: ['#f3b890', 80, 260] },
     bg: '#f3b890',
