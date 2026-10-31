@@ -270,8 +270,9 @@ export const StreetSet: React.FC = () => {
   const Manhole = obj('manhole');
   const Rice = obj('rice');
   const Lantern = obj('lantern');
-  const SW = 6; // sidewalk width (trees fit with room to walk)
-  const HZ = 14; // house front z (both sides): road ≈ 16 units wide
+  const SW = 12; // sidewalk width: tree canopy (≈3.6 units each way) + balconies (2.7) never touch
+  const HZ = 20; // house front z (both sides): road = 2 × (HZ − SW) = 16 units
+  const TZ = HZ - SW + 2.5; // trees stand near the curb, canopy clears balconies by ≈3 units
   const left: [number, number, number, string, string, 'tile' | 'flat', string, string, string, 'rice' | 'baskets' | 'jars' | 'cloth', string[]?, boolean?][] = [
     // x, w, floors, colour, shutter, roof, sign, signBg, awning, goods, vertical sign, year
     [-42, 10, 3, '#e3b85a', '#3f7a5a', 'flat', 'TIỆM GẠO', '#8a1c14', '#c8302c', 'rice', ['GẠO', 'NGON'], false],
@@ -286,6 +287,9 @@ export const StreetSet: React.FC = () => {
     <>
       <SkyBackdrop colors={['#86b8e6', '#a9cdef', '#d6e9f7', '#f3e6c8']} y={40} h={150} />
       {/* ground: dirt road, stone sidewalks with curbs, gutters */}
+      <group name="Земля вокруг">
+        <Tx geometry={plane} map={dirtTex([60, 60])} color="#efe4cf" position={[0, -0.02, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[700, 700, 1]} line={0} />
+      </group>
       <group name="Дорога">
         <Tx geometry={plane} map={dirtTex([10, 3])} position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[200, 2 * (HZ - SW), 1]} line={0} />
       </group>
@@ -310,13 +314,13 @@ export const StreetSet: React.FC = () => {
       {/* trees, poles + wires, lantern strings */}
       {[-36, -14, 8, 30].map((x, i) => (
         <group key={x} name={`Дерево ${i + 1}`}>
-          <Tree position={[x, 0.3, -HZ + SW / 2]} scale={2.6} colors={['#4f9d4a', '#3c7f3a']} />
-          <Shadow position={[x, 0.31, -HZ + SW / 2]} r={2.4} opacity={0.15} />
+          <Tree position={[x, 0.3, -TZ]} scale={2.6} colors={['#4f9d4a', '#3c7f3a']} />
+          <Shadow position={[x, 0.31, -TZ]} r={2.4} opacity={0.15} />
         </group>
       ))}
       {[-44, -24, -4, 16, 36].map((x, i, a) => (
         <group key={x} name={`Столб ${i + 1}`}>
-          <Pole x={x} z={HZ - 1.2} next={a[i + 1]} />
+          <Pole x={x} z={HZ - SW + 1} next={a[i + 1]} />
         </group>
       ))}
       {[-26, -4, 18].map((x, i) => (
@@ -348,7 +352,7 @@ export const StreetSet: React.FC = () => {
       </group>
       {/* far end of the street: a colonial building closing the view */}
       <group name="Почта (конец улицы)" position={[60, 0, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <TubeHouse w={34} floors={3} color="#efe0b0" shutter="#3f7a5a" roof="flat" sign="POSTE · BƯU ĐIỆN" signBg="#2a3a6a" awning="#2f4a8a" goods="cloth" year />
+        <TubeHouse w={2 * HZ + 6} floors={3} color="#efe0b0" shutter="#3f7a5a" roof="flat" sign="POSTE · BƯU ĐIỆN" signBg="#2a3a6a" awning="#2f4a8a" goods="cloth" year />
       </group>
     </>
   );

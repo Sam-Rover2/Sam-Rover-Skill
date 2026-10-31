@@ -56,14 +56,15 @@ export const LOCATIONS: Location[] = [
 ];
 
 /** Turntable preview of a location: camera slowly circles the set. */
-export const LocationPreview: React.FC<{ id: string }> = ({ id }) => {
+/** Turntable preview. `cam` overrides the camera (used for side / top checks). */
+export const LocationPreview: React.FC<{ id: string; cam?: { pos: [number, number, number]; target: [number, number, number]; fov?: number } }> = ({ id, cam }) => {
   const t = useT();
   const loc = LOCATIONS.find((l) => l.id === id)!;
   const k = keys(t, [[0, 0], [8, 1]]);
   const [px, py, pz] = loc.home.pos;
   const [tx, ty, tz] = loc.home.target;
   return (
-    <Stage light={loc.light} background={loc.bg} cam={{ pos: [px + k * 14, py, pz], target: [tx + k * 14, ty, tz], fov: 40, t }}>
+    <Stage light={loc.light} background={loc.bg} cam={cam ? { ...cam, fov: cam.fov ?? 40, t } : { pos: [px + k * 14, py, pz], target: [tx + k * 14, ty, tz], fov: 40, t }}>
       <loc.Set />
       {loc.scalePos && (
         <group position={loc.scalePos} rotation={[0, 0.6, 0]}>
