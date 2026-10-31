@@ -18,6 +18,8 @@ import { Glow, Tx, box, brickTex, plane } from '../locations/kit';
 export type { V3 };
 
 /* ---------------- camera ---------------- */
+/** Minimum lens angle (vertical fov): the reference films use a wide lens close to the subject. */
+const WIDE = 60;
 export interface Frame {
   pos: V3;
   target: V3;
@@ -29,9 +31,13 @@ const Rig: React.FC<{ a: Frame; b: Frame; k: number }> = ({ a, b, k }) => {
   useLayoutEffect(() => {
     const p = keys(k, [[0, a.pos], [1, b.pos]], smooth);
     const tg = keys(k, [[0, a.target], [1, b.target]], smooth);
-    camera.position.set(p[0], p[1], p[2]);
+    const f0 = keys(k, [[0, a.fov ?? 40], [1, b.fov ?? a.fov ?? 40]], smooth);
+    // wide lens like the references: same subject size, camera closer, wider angle
+    const f = Math.max(f0, WIDE);
+    const m = Math.tan((f0 * Math.PI) / 360) / Math.tan((f * Math.PI) / 360);
+    camera.position.set(tg[0] + (p[0] - tg[0]) * m, tg[1] + (p[1] - tg[1]) * m, tg[2] + (p[2] - tg[2]) * m);
     camera.lookAt(tg[0], tg[1], tg[2]);
-    camera.fov = keys(k, [[0, a.fov ?? 40], [1, b.fov ?? a.fov ?? 40]], smooth);
+    camera.fov = f;
     camera.near = 0.1;
     camera.far = 400;
     camera.updateProjectionMatrix();

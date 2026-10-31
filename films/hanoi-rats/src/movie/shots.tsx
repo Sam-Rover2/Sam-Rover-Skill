@@ -475,7 +475,7 @@ const S17: React.FC<SP> = ({ t, k }) => {
   const pet = Math.sin(t * 5) * 0.12;
   const wink = t >= 48.7 && t < 49.1; // «income»
   return (
-    <Shot light={LIGHT.night} lamps={[{ pos: [2, 6, 2], color: '#ffbf60', power: 30, dist: 14 }]} k={k} a={{ pos: [0.6, 3.6, 3.2], target: [0, 3.1, -2], fov: 42 }} b={{ pos: [0.5, 3.6, 2.5], target: [0, 3.1, -2], fov: 41 }}>
+    <Shot light={LIGHT.night} lamps={[{ pos: [2, 6, 2], color: '#ffbf60', power: 30, dist: 14 }]} k={k} a={{ pos: [0.6, 3.6, 5.2], target: [0, 3.3, -2], fov: 42 }} b={{ pos: [0.5, 3.6, 4.4], target: [0, 3.3, -2], fov: 41 }}>
       <AlleyCorner />
       <Who id="catcher" pos={[0, 0, -2]} pose={{ face: wink ? 'squint' : 'smug', handL: [-0.45, 2.25, 1.05], handR: [0.3, 2.85 + pet, 1.05] }} />
       <RatA pos={[0, 2.05, -0.95]} t={t} pose={{ face: 'happy' }} scale={1.05} />
@@ -629,7 +629,7 @@ const CoinHill: React.FC = () => (
 );
 
 const S25: React.FC<SP> = ({ t, k }) => (
-  <Shot light={LIGHT.office} lamps={[{ pos: [0, 8, 2], color: '#ffe0a0', power: 25, dist: 16 }]} k={k} a={{ pos: [0.6, 4.0, 5.5], target: [0.4, 3.4, -2], fov: 42 }} b={{ pos: [0.8, 4.8, 10], target: [0.4, 3.4, -2.5], fov: 44 }}>
+  <Shot light={LIGHT.office} lamps={[{ pos: [0, 8, 2], color: '#ffe0a0', power: 25, dist: 16 }]} k={k} a={{ pos: [0.8, 4.2, 7.5], target: [0.6, 3.5, -2], fov: 42 }} b={{ pos: [0.8, 4.8, 10], target: [0.4, 3.4, -2.5], fov: 44 }}>
     <OfficeCorner />
     <group position={[2.6, 0, -3.6]}>
       <CoinHill />
