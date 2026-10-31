@@ -2,7 +2,6 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { setModelUrlResolver } from '../src/assets/Model';
 import { Flat } from '../src/lib/Toon';
 import { Character } from '../src/rig/Character';
@@ -146,23 +145,66 @@ const ScaleRef: React.FC<{ children: React.ReactNode; onFit?: (pos: V3, target: 
   );
 };
 
-/* ---------- camera: orbit + WASD fly + animated jumps to shot cameras ---------- */
+/* ---------- camera: game-style "head" look + WASD fly, wheel = speed ---------- */
+export const SPEED = { min: 1, max: 40, init: 8 };
+let speedHook: ((v: number) => void) | null = null;
+
 const CameraRig: React.FC<{ goal: { pos: V3; target: V3; fov?: number; n: number } }> = ({ goal }) => {
   const { camera, gl } = useThree();
-  const ctl = useRef<OrbitControls>();
+  const look = useRef({ yaw: 0, pitch: 0 });
+  const speed = useRef(SPEED.init);
   const keys = useRef(new Set<string>());
+  const setLookAt = (target: THREE.Vector3) => {
+    const d = target.clone().sub(camera.position).normalize();
+    look.current.yaw = Math.atan2(d.x, d.z);
+    look.current.pitch = Math.asin(THREE.MathUtils.clamp(d.y, -1, 1));
+  };
+  const applyLook = () => {
+    const { yaw, pitch } = look.current;
+    const dir = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+    camera.lookAt(camera.position.clone().add(dir));
+  };
   useEffect(() => {
-    const c = new OrbitControls(camera, gl.domElement);
-    c.enableDamping = true;
-    c.maxPolarAngle = Math.PI * 0.495;
-    ctl.current = c;
-    const down = (e: KeyboardEvent) => {
+    const el = gl.domElement;
+    let drag = false;
+    let lx = 0;
+    let ly = 0;
+    const down = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      drag = true;
+      lx = e.clientX;
+      ly = e.clientY;
+      el.setPointerCapture(e.pointerId);
+    };
+    const move = (e: PointerEvent) => {
+      if (!drag) return;
+      const k = 0.004;
+      look.current.yaw -= (e.clientX - lx) * k;
+      look.current.pitch = THREE.MathUtils.clamp(look.current.pitch - (e.clientY - ly) * k, -1.5, 1.5);
+      lx = e.clientX;
+      ly = e.clientY;
+      applyLook();
+    };
+    const up = () => {
+      drag = false;
+    };
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      // wheel up → faster, wheel down → slower, within [min, max]
+      speed.current = THREE.MathUtils.clamp(speed.current * (e.deltaY < 0 ? 1.2 : 1 / 1.2), SPEED.min, SPEED.max);
+      speedHook?.(speed.current);
+    };
+    const kd = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).tagName === 'TEXTAREA') return;
       keys.current.add(e.key.toLowerCase());
     };
-    const up = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
-    addEventListener('keydown', down);
-    addEventListener('keyup', up);
+    const ku = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('wheel', wheel, { passive: false });
+    addEventListener('keydown', kd);
+    addEventListener('keyup', ku);
     let raf = 0;
     let last = performance.now();
     const tick = () => {
@@ -170,11 +212,9 @@ const CameraRig: React.FC<{ goal: { pos: V3; target: V3; fov?: number; n: number
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const k = keys.current;
-      const speed = (k.has('shift') ? 30 : 10) * dt;
-      const fwd = new THREE.Vector3();
-      camera.getWorldDirection(fwd);
-      fwd.y = 0;
-      fwd.normalize();
+      const v = speed.current * (k.has('shift') ? 3 : 1) * dt;
+      const { yaw } = look.current;
+      const fwd = new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw));
       const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0));
       const mv = new THREE.Vector3();
       if (k.has('w') || k.has('ц') || k.has('arrowup')) mv.add(fwd);
@@ -184,39 +224,47 @@ const CameraRig: React.FC<{ goal: { pos: V3; target: V3; fov?: number; n: number
       if (k.has('e') || k.has('у')) mv.y += 1;
       if (k.has('q') || k.has('й')) mv.y -= 1;
       if (mv.lengthSq()) {
-        mv.normalize().multiplyScalar(speed);
-        camera.position.add(mv);
-        c.target.add(mv);
+        camera.position.add(mv.normalize().multiplyScalar(v));
+        applyLook();
       }
-      c.update();
       raf = requestAnimationFrame(tick);
     };
     tick();
     return () => {
       cancelAnimationFrame(raf);
-      removeEventListener('keydown', down);
-      removeEventListener('keyup', up);
-      c.dispose();
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('wheel', wheel);
+      removeEventListener('keydown', kd);
+      removeEventListener('keyup', ku);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camera, gl]);
+  // smooth jump to a preset (item home or shot camera)
   useEffect(() => {
-    const c = ctl.current;
-    if (!c) return;
     const p0 = camera.position.clone();
-    const t0 = c.target.clone();
+    const { yaw: y0, pitch: x0 } = look.current;
     const f0 = (camera as THREE.PerspectiveCamera).fov;
     const p1 = new THREE.Vector3(...goal.pos);
-    const t1 = new THREE.Vector3(...goal.target);
+    const tmp = camera.position.clone();
+    camera.position.copy(p1);
+    setLookAt(new THREE.Vector3(...goal.target));
+    const { yaw: y1, pitch: x1 } = look.current;
+    camera.position.copy(tmp);
     const f1 = goal.fov ?? 40;
+    const dy = Math.atan2(Math.sin(y1 - y0), Math.cos(y1 - y0));
     const start = performance.now();
     let raf = 0;
     const step = () => {
       const u = Math.min(1, (performance.now() - start) / 700);
       const e = u < 0.5 ? 2 * u * u : 1 - (-2 * u + 2) ** 2 / 2;
       camera.position.lerpVectors(p0, p1, e);
-      c.target.lerpVectors(t0, t1, e);
+      look.current.yaw = y0 + dy * e;
+      look.current.pitch = x0 + (x1 - x0) * e;
       (camera as THREE.PerspectiveCamera).fov = f0 + (f1 - f0) * e;
       camera.updateProjectionMatrix();
+      applyLook();
       if (u < 1) raf = requestAnimationFrame(step);
     };
     step();
@@ -244,6 +292,8 @@ const NOTES_KEY = `review-notes-${PROJECT.title}`;
 const App: React.FC = () => {
   const [sel, setSel] = useState(items[0].key);
   const [frame, setFrame] = useState(false);
+  const [speed, setSpeed] = useState(SPEED.init);
+  speedHook = setSpeed;
   const item = items.find((i) => i.key === sel)!;
   const [goal, setGoal] = useState({ ...item.home, fov: 40, n: 0 });
   const [notes, setNotes] = useState<Record<string, string>>(() => {
@@ -335,7 +385,13 @@ const App: React.FC = () => {
             </button>
           )}
         </div>
-        <div className="help">Мышь: вращать · колесо: зум · правая кнопка: сдвиг · <b>W A S D</b>: лететь · <b>Q / E</b>: вниз / вверх · <b>Shift</b>: быстрее</div>
+        <div className="help">
+          <b>ЛКМ</b>: повернуть голову · <b>W A S D</b>: лететь · <b>Q / E</b>: вниз / вверх · <b>колесо</b>: скорость · <b>Shift</b>: ×3
+          <span className="speed">
+            <span style={{ width: `${((Math.log(speed) - Math.log(SPEED.min)) / (Math.log(SPEED.max) - Math.log(SPEED.min))) * 100}%` }} />
+          </span>
+          скорость {speed.toFixed(1)}
+        </div>
         <div className="notes">
           <label>Правки к «{item.title}»</label>
           <textarea value={notes[sel] ?? ''} placeholder="Что поменять? Например: машину ближе к дому, у героя кепка синяя…" onChange={(e) => setNotes({ ...notes, [sel]: e.target.value })} />
