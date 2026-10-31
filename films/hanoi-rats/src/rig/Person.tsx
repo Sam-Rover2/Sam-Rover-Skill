@@ -161,6 +161,36 @@ const HatMesh: React.FC<{ hat: Hat; color?: string }> = ({ hat, color }) => {
   }
 };
 
+/**
+ * Keeps a hand target OUTSIDE the head and the body (QA-038): hands never go into the
+ * character, and a raised arm passes beside the head, not through it.
+ */
+function safeHand(p: V3, side: number, hips: V3, top: V3, headC: V3, b: number): V3 {
+  let [x, y, z] = p;
+  // raised above the shoulders: keep the hand out to the side so the arm clears the head
+  if (y > top[1] - 0.2 && Math.abs(x - headC[0]) < 1.25 && z - headC[2] < 1.1) x = headC[0] + side * 1.25;
+  // head: stay outside a sphere a bit larger than the head
+  const R = HEAD + 0.3;
+  let dx = x - headC[0], dy = y - headC[1], dz = z - headC[2];
+  let d = Math.hypot(dx, dy, dz);
+  if (d < R) {
+    if (d < 1e-3) { dx = 0; dy = 0; dz = 1; d = 1; }
+    x = headC[0] + (dx / d) * R; y = headC[1] + (dy / d) * R; z = headC[2] + (dz / d) * R;
+  }
+  // body: an elliptic column from the hips to the top of the body
+  if (y > hips[1] - 0.2 && y < top[1] + 0.1) {
+    const rx = 0.52 * b + 0.16, rz = 0.46 * b + 0.16;
+    const ex = (x - hips[0]) / rx, ez = (z - hips[2]) / rz;
+    const r = Math.hypot(ex, ez);
+    if (r < 1) {
+      const k = r < 1e-3 ? 0 : 1 / r;
+      x = r < 1e-3 ? hips[0] + side * rx : hips[0] + ex * k * rx;
+      z = r < 1e-3 ? z : hips[2] + ez * k * rz;
+    }
+  }
+  return [x, y, z];
+}
+
 export const Person: React.FC<{ look: PersonLook; pose?: PersonPose }> = ({ look, pose = {} }) => {
   const b = look.build ?? 1;
   const face = pose.face ?? 'smile';
@@ -172,8 +202,9 @@ export const Person: React.FC<{ look: PersonLook; pose?: PersonPose }> = ({ look
   const shX = 0.42 * b;
   const sL: V3 = [-shX, shY, hips[2] + Math.sin(lean) * BODY_H * 0.8];
   const sR: V3 = [shX, shY, sL[2]];
-  const hL = reach(sL, pose.handL ?? [-shX - 0.25, hips[1] - 0.05, 0.1], ARM);
-  const hR = reach(sR, pose.handR ?? [shX + 0.25, hips[1] - 0.05, 0.1], ARM);
+  const headC: V3 = [top[0], top[1] + HEAD * 0.82, top[2]];
+  const hL = reach(sL, safeHand(pose.handL ?? [-shX - 0.25, hips[1] - 0.05, 0.1], -1, hips, top, headC, b), ARM);
+  const hR = reach(sR, safeHand(pose.handR ?? [shX + 0.25, hips[1] - 0.05, 0.1], 1, hips, top, headC, b), ARM);
   const fL = reach([hips[0] - 0.2, hips[1], hips[2]], pose.footL ?? [-0.24, 0.08, 0.05], LEG);
   const fR = reach([hips[0] + 0.2, hips[1], hips[2]], pose.footR ?? [0.24, 0.08, 0.05], LEG);
   const shoe = look.shoe ?? '#2a2420';
