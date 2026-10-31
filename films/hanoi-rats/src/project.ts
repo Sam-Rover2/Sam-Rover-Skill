@@ -32,6 +32,8 @@ export const CAST: CastMember[] = [
     look: { body: '#f1ead6', outfit: 'colonial', hat: 'pith', moustache: 'thin', hairColor: '#4a3426', shoe: '#5a3a24' } },
   { id: 'inspector2', name: 'Инспектор-2', role: 'напарник: в очках, моложе', kind: 'person', status: 'approved',
     look: { body: '#e8dfc6', outfit: 'colonial', hat: 'pith', glasses: true, build: 0.92, height: 0.97, shoe: '#5a3a24' } },
+  { id: 'governor', name: 'Генерал-губернатор', role: '«правительство»: бордовый сюртук, котелок, очки, седые усы — НЕ тот чиновник, что строил канализацию', kind: 'person', status: 'draft',
+    look: { body: '#7a1f2b', outfit: 'frock', hat: 'bowler', hatColor: '#1b1b1f', moustache: 'thin', glasses: true, hairColor: '#b9b9c2', build: 1.3, height: 1.04, shoe: '#1b1b1f' } },
   { id: 'official', name: 'Чиновник', role: 'французский колониальный чиновник: синий мундир, кепи, пышные усы, монокль', kind: 'person', status: 'approved',
     look: { body: '#2f3d73', outfit: 'frock', hat: 'kepi', moustache: 'big', monocle: true, hairColor: '#2a2420', build: 1.18, shoe: '#1b1b1f' } },
   { id: 'catcher', name: 'Ловец', role: 'хитрый ловец крыс: нон-ла, рубаха, хитрая улыбка', kind: 'person', status: 'approved',

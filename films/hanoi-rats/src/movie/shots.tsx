@@ -16,6 +16,20 @@ import { Glow, Tx, box, plane, plankTex } from '../locations/kit';
 import { AlleyCorner, FarmCorner, LIGHT, OfficeCorner, OpenManhole, Shot, StreetCorner, Tunnel, WallCard, cardTex, type V3 } from './kit';
 
 const O = (id: string) => OBJECTS.find((o) => o.id === id)!.C;
+/** Magnifying glass for close-ups: origin = centre of the lens, lens faces +z. */
+const Lens: React.FC = () => (
+  <group>
+    <Toon geometry={new THREE.TorusGeometry(0.34, 0.05, 10, 40)} color="#c9a24a" line={3} />
+    <mesh geometry={G.disc} scale={0.33}>
+      <meshBasicMaterial color="#dff2ff" transparent opacity={0.22} depthWrite={false} />
+    </mesh>
+    <mesh geometry={G.disc} position={[-0.12, 0.12, 0.01]} rotation={[0, 0, 0.7]} scale={[0.09, 0.035, 1]}>
+      <meshBasicMaterial color="#ffffff" transparent opacity={0.7} depthWrite={false} />
+    </mesh>
+    <Toon geometry={G.cyl} color="#c9a24a" position={[0.27, -0.27, 0]} rotation={[0, 0, 0.785]} scale={[0.04, 0.12, 0.04]} line={2} />
+    <Toon geometry={G.cyl} color="#7a4a2a" position={[0.52, -0.52, 0]} rotation={[0, 0, 0.785]} scale={[0.055, 0.55, 0.055]} line={3} />
+  </group>
+);
 type SP = { t: number; k: number };
 export interface ShotDef {
   from: number;
@@ -23,6 +37,25 @@ export interface ShotDef {
   name: string;
   C: React.FC<SP>;
 }
+
+/**
+ * Walk from a to b between t0 and t1, decelerating to a stop: the feet move exactly as
+ * far as the body (phase = distance / stride) and stop when the body stops (QA-042).
+ */
+const walkTo = (t: number, t0: number, t1: number, a: V3, b: V3, seed = 0): { pos: V3; pose: PersonPose; moving: boolean; heading: number } => {
+  const u = clamp01((t - t0) / (t1 - t0));
+  const e = (x: number) => 1 - (1 - x) * (1 - x); // full speed at once, gentle stop
+  const kk = e(u);
+  const L = Math.hypot(b[0] - a[0], b[2] - a[2]);
+  const dist = L * kk;
+  const speed = u <= 0 || u >= 1 ? 0 : (2 * (1 - u) * L) / (t1 - t0);
+  const amt = clamp01(speed / 1.4);
+  const pos: V3 = [lerp(a[0], b[0], kk), lerp(a[1], b[1], kk), lerp(a[2], b[2], kk)];
+  return { pos, pose: walkPose(dist / 0.75 + seed, amt * 0.9), moving: amt > 0.02, heading: Math.atan2(b[0] - a[0], b[2] - a[2]) };
+};
+/** smooth 0→1 between t0 and t1 (for every pose change: no snapping, QA-043) */
+const sm = (t: number, t0: number, t1 = t0 + 0.4) => smooth(clamp01((t - t0) / (t1 - t0)));
+const mixV = (a: V3, b: V3, k: number): V3 => [lerp(a[0], b[0], k), lerp(a[1], b[1], k), lerp(a[2], b[2], k)];
 
 const breathe = (t: number, s = 0): PersonPose => ({ hips: [0, Math.sin(t * 2.2 + s) * 0.03, 0] });
 const notebookHands: PersonPose = { handL: [-0.3, 2.5, 0.8], handR: [0.25, 2.6, 0.82], holdL: <HeldNotebook /> };
@@ -155,14 +188,14 @@ const Desk: React.FC<{ pos: V3 }> = ({ pos }) => {
 /* =================================================================== */
 
 const S01: React.FC<SP> = ({ t, k }) => {
-  // inspectors walk towards us along the street
-  const z = lerp(-4.5, 0.2, smooth(clamp01(t / 3)));
-  const w = walkPose(t * 2.6, 0.9);
+  // inspectors walk towards us along the street and stop
+  const w1 = walkTo(t, 0, 2.8, [-1.3, 0, -4.5], [-1.3, 0, 0.2]);
+  const w2 = walkTo(t, 0, 2.8, [1.3, 0, -4.9], [1.3, 0, -0.2], 1);
   return (
     <Shot light={LIGHT.day} k={k} a={{ pos: [2.6, 3.0, 11], target: [0, 3.3, -2], fov: 42 }} b={{ pos: [2.0, 3.1, 9.6], target: [0, 3.3, -1.5], fov: 42 }}>
       <StreetCorner />
-      <Who id="inspector" pos={[-1.3, 0, z]} pose={mix(w, { face: 'neutral', handL: [-0.35, 2.5, 0.8], holdL: <HeldNotebook /> })} />
-      <Who id="inspector2" pos={[1.3, 0, z - 0.4]} pose={mix(walkPose(t * 2.6 + 1, 0.9), { face: 'smile' })} />
+      <Who id="inspector" pos={w1.pos} pose={mix(w1.pose, breathe(t, 1), { face: 'neutral', handL: [-0.35, 2.5, 0.8], holdL: <HeldNotebook /> })} />
+      <Who id="inspector2" pos={w2.pos} pose={mix(w2.pose, breathe(t, 2), { face: 'smile' })} />
       <O_Rickshaw />
     </Shot>
   );
@@ -178,12 +211,13 @@ const O_Rickshaw: React.FC = () => {
 
 const S02: React.FC<SP> = ({ t, k }) => {
   const see = t >= 3.4; // «noticed»
-  const pose = (s: number): PersonPose => mix(breathe(t, s), { face: see ? 'o' : 'neutral', look: see ? [0.5, -0.8] : [0, 0], headTilt: see ? -0.12 : 0 });
+  const k2 = sm(t, 3.4, 3.8);
+  const pose = (s: number): PersonPose => mix(breathe(t, s), { face: see ? 'o' : 'neutral', look: [0.5 * k2, -0.8 * k2], headTilt: -0.12 * k2 });
   return (
     <Shot light={LIGHT.day} k={k} a={{ pos: [0.3, 4.0, 8.6], target: [0, 3.6, 0], fov: 40 }} b={{ pos: [0.2, 4.0, 7.6], target: [0, 3.6, 0], fov: 40 }}>
       <StreetCorner />
-      <Who id="inspector" pos={[-1.1, 0, 0.2]} rotY={see ? 0.25 : 0} pose={mix(pose(1), notebookHands)} />
-      <Who id="inspector2" pos={[1.1, 0, -0.2]} rotY={see ? 0.4 : 0} pose={pose(2)} />
+      <Who id="inspector" pos={[-1.1, 0, 0.2]} rotY={0.25 * k2} pose={mix(pose(1), notebookHands)} />
+      <Who id="inspector2" pos={[1.1, 0, -0.2]} rotY={0.4 * k2} pose={pose(2)} />
     </Shot>
   );
 };
@@ -201,14 +235,15 @@ const S03: React.FC<SP> = ({ t, k }) => (
 );
 
 const S04: React.FC<SP> = ({ t, k }) => {
-  const M = O('magnifier');
   const m = smooth(clamp01((t - 8.15) / 0.6));
+  // the stump is at the rat's rear: rat at the origin facing +x → rear ≈ (−0.66, 0.37, 0)
+  const lensAt: V3 = [-1.0, 0.5, 0.42];
   return (
-    <Shot light={LIGHT.day} k={k} a={{ pos: [-2.8, 1.1, 2.6], target: [-0.6, 0.5, 0], fov: 34 }} b={{ pos: [-2.4, 1.0, 2.2], target: [-0.6, 0.45, 0], fov: 33 }}>
+    <Shot light={LIGHT.day} k={k} a={{ fit: 1.9, pos: [-2.8, 1.1, 2.6], target: [-0.6, 0.5, 0], fov: 34 }} b={{ fit: 1.9, pos: [-2.4, 1.0, 2.2], target: [-0.6, 0.45, 0], fov: 33 }}>
       <StreetCorner sign={false} />
       <RatA pos={[0, 0, 0]} rotY={Math.PI / 2} t={t} cut pose={{ face: 'sly' }} />
-      <group position={[lerp(-1.6, -0.5, m), lerp(1.6, -0.25, m), lerp(1.4, 0.6, m)]} rotation={[0.1, -0.9, 0]} scale={1.3}>
-        <M />
+      <group position={mixV([-2.0, 2.2, 1.2], lensAt, m)} rotation={[-0.18, -0.7, Math.PI / 2]}>
+        <Lens />
       </group>
     </Shot>
   );
@@ -239,7 +274,7 @@ const tunnelLamps = [
 ];
 
 const S06: React.FC<SP> = ({ t, k }) => {
-  const wide = t >= 13.3; // «massive»
+  const w = sm(t, 13.1, 13.6); // «massive»: arms open smoothly
   return (
     <Shot light={LIGHT.sewer} lamps={tunnelLamps} k={k} a={{ pos: [1.8, 3.8, 5.5], target: [4.4, 3.4, -2], fov: 44 }} b={{ pos: [0.2, 5, 12], target: [2, 2.6, -10], fov: 50 }}>
       <Tunnel />
@@ -247,11 +282,9 @@ const S06: React.FC<SP> = ({ t, k }) => {
         id="official"
         pos={[4.9, 0.6, -2]}
         rotY={-0.45}
-        pose={mix(breathe(t, 1), wide ? { face: 'grin', handL: [-1.5, 3.7, 0.5], handR: [1.5, 3.7, 0.5] } : { face: 'smug', handL: [-0.78, 2.1, 0.1], handR: [0.78, 2.1, 0.1] })}
+        pose={mix(breathe(t, 1), { face: w > 0.5 ? 'grin' : 'smug', handL: mixV([-0.78, 2.1, 0.1], [-1.5, 3.7, 0.5], w), handR: mixV([0.78, 2.1, 0.1], [1.5, 3.7, 0.5], w) })}
       />
-      {[[-5, -6], [-4.2, -12], [5.4, -14], [-5.6, -20], [4.6, -24]].map(([x, z], i) => (
-        <RatA key={i} pos={[x, 0.6, z]} rotY={hash(i) * 6} t={t} pose={{ face: 'happy' }} />
-      ))}
+      {/* the sewer is new and clean: no rats yet (they arrive in the next shot) */}
     </Shot>
   );
 };
@@ -263,10 +296,13 @@ const S07: React.FC<SP> = ({ t, k }) => (
       const s = i % 2 ? 1 : -1;
       const x = s * (4 + hash(i + 2) * 3);
       const z = 1 - hash(i + 5) * 26;
-      const bob = Math.abs(Math.sin(t * 6 + i)) * 0.15;
-      return <RatA key={i} pos={[x, 0.6 + bob, z]} rotY={face([x, 0, z], [0, 0, 8]) + (hash(i) - 0.5)} t={t} pose={{ stand: i % 3 === 0, face: 'happy' }} />;
+      const t0 = 15.9 + i * 0.18; // «creating a paradise»: rats arrive one by one
+      if (t < t0) return null;
+      const g = clamp01((t - t0) / 0.35);
+      const bob = (1 - Math.cos(t * 4 + i)) * 0.06;
+      return <RatA key={i} scale={1.1 * (0.6 + 0.4 * smooth(g))} pos={[x, 0.6 + bob + (1 - g) * 0.4, z]} rotY={face([x, 0, z], [0, 0, 8]) + (hash(i) - 0.5)} t={t} pose={{ face: 'happy' }} />;
     })}
-    <RatA pos={[-4.0, 0.6, 3.4]} rotY={0.5} t={t} pose={{ stand: true, face: t >= 18.7 ? 'sly' : 'happy' }} scale={1.3} />
+    {t >= 16.4 && <RatA pos={[-4.0, 0.6 + (1 - sm(t, 16.4)) * 0.5, 3.4]} rotY={0.5} t={t} pose={{ face: t >= 18.7 ? 'sly' : 'happy' }} scale={1.3 * (0.6 + 0.4 * sm(t, 16.4))} />}
   </Shot>
 );
 
@@ -287,25 +323,29 @@ const S08: React.FC<SP> = ({ t, k }) => {
       <WallCard map={posterTex()} pos={[-5, 5.6, -9.6]} size={[3.6, 4.6]} />
       <Desk pos={[0, 0, -2.2]} />
       <Toon geometry={G.box} color="#fbf8f0" position={[0.65, BODY.waist + 0.02, -1.6]} rotation={[0, 0.2, 0]} scale={[0.9, 0.02, 1.2]} line={2} />
-      <Who id="official" pos={[0, 0, -4.6]} pose={mix(breathe(t, 2), { face: 'smug', handR: [0.65, lerp(3.2, 2.6, down), 1.5], holdR: <Stamp />, handL: [-0.6, 2.55, 1.2] })} />
+      <Who id="governor" pos={[0, 0, -4.6]} pose={mix(breathe(t, 2), { face: 'smug', handR: [0.65, lerp(3.2, 2.6, down), 1.5], holdR: <Stamp />, handL: [-0.6, 2.55, 1.2] })} />
     </Shot>
   );
 };
 
 const S09: React.FC<SP> = ({ t, k }) => {
-  const w = path3(t, 23.3, 24.6, [7, 0, -4.2], [1.6, 0, -4.2]);
-  const read = t >= 24.6 && t < 25.0;
+  const wk = walkTo(t, 23.3, 24.7, [7, 0, -4.2], [1.6, 0, -4.2]);
   const turned = t >= 25.0; // «bounty»
-  const rot = turned ? 0.25 : read ? Math.PI : -Math.PI / 2;
+  // turn to the poster, then to us — smoothly
+  const rot = lerp(lerp(-Math.PI / 2, -Math.PI * 0.95, sm(t, 24.5, 24.85)), 0.25, sm(t, 24.95, 25.35));
+  const rub = sm(t, 25.0, 25.4);
   return (
     <Shot light={LIGHT.office} k={k} a={{ pos: [0.6, 4.6, 9.5], target: [0, 4.4, -6], fov: 46 }} b={{ pos: [0.6, 4.5, 8.2], target: [0.4, 4.2, -6], fov: 45 }}>
       <OfficeCorner flag={false} />
       <WallCard map={posterTex()} pos={[-1.4, 5.8, -9.6]} size={[5, 6.4]} />
       <Who
         id="catcher"
-        pos={w}
+        pos={wk.pos}
         rotY={rot}
-        pose={mix(t < 24.6 ? walkPose(t * 2.6, 0.9) : breathe(t, 4), { face: turned ? 'grin' : 'smug', ...(turned ? { handL: [-0.15, 2.6, 0.95] as V3, handR: [0.15 + Math.sin(t * 12) * 0.05, 2.62, 0.97] as V3 } : {}) })}
+        pose={mix(wk.pose, breathe(t, 4), {
+          face: turned ? 'grin' : 'smug',
+          ...(rub > 0 ? { handL: mixV([-0.68, 1.8, 0.15], [-0.15, 2.6, 0.95], rub), handR: mixV([0.68, 1.8, 0.15], [0.15 + Math.sin(t * 4) * 0.04, 2.62, 0.97], rub) } : {}),
+        })}
       />
     </Shot>
   );
@@ -318,6 +358,7 @@ function path3(t: number, t0: number, t1: number, a: V3, b: V3): V3 {
 
 const S10: React.FC<SP> = ({ t, k }) => {
   const stink = t >= 28.2; // «drowning»
+  const r = sm(t, 28.2, 28.6);
   return (
     <Shot light={LIGHT.office} k={k} a={{ pos: [3.2, 4.6, 9.5], target: [0, 2.8, -2.4], fov: 46 }} b={{ pos: [2.6, 4.4, 8.2], target: [0, 2.8, -2.4], fov: 45 }}>
       <OfficeCorner />
@@ -325,7 +366,7 @@ const S10: React.FC<SP> = ({ t, k }) => {
       <Who
         id="official"
         pos={[0, 0, -5.4]}
-        pose={mix(breathe(t, 5), stink ? { face: 'panic', lean: -0.18, handL: [-0.2, 3.55, 1.35], handR: [1.4, 2.9, 0.6] } : { face: 'smug', handL: [-0.6, 2.55, 1.2], handR: [0.6, 2.55, 1.2] })}
+        pose={mix(breathe(t, 5), { face: stink ? 'panic' : 'smug', lean: -0.18 * r, handL: mixV([-0.6, 2.55, 1.2], [-0.2, 3.55, 1.35], r), handR: mixV([0.6, 2.55, 1.2], [1.4, 2.9, 0.6], r) })}
       />
       {/* dead rats rain down and pile up in front of the desk */}
       {Array.from({ length: 16 }, (_, i) => {
@@ -353,11 +394,11 @@ const S10: React.FC<SP> = ({ t, k }) => {
 const S11: React.FC<SP> = ({ t, k }) => {
   const up = t >= 31.85; // «one simple rule»
   return (
-    <Shot light={LIGHT.office} k={k} a={{ pos: [0.7, 4.7, 1.2], target: [0, 4.1, -5.4], fov: 40 }} b={{ pos: [0.6, 4.6, 0.2], target: [0, 4.1, -5.4], fov: 39 }}>
+    <Shot light={LIGHT.office} k={k} a={{ fit: 3.4, pos: [0.7, 4.7, 1.2], target: [0, 4.1, -5.4], fov: 40 }} b={{ fit: 3.4, pos: [0.6, 4.6, 0.2], target: [0, 4.1, -5.4], fov: 39 }}>
       <OfficeCorner />
       <Desk pos={[0, 0, -3]} />
       <Who
-        id="official"
+        id="governor"
         pos={[0, 0, -5.4]}
         pose={mix(breathe(t, 6), {
           face: 'smug',
@@ -371,12 +412,13 @@ const S11: React.FC<SP> = ({ t, k }) => {
 };
 
 const S12: React.FC<SP> = ({ t, k }) => {
-  const CIT: V3 = [0.5, 0, 2.4];
+  const CIT: V3 = [0.5, 0, 2.95];
   const rot = Math.PI;
   const placed = t >= 34.8; // «tail»
-  const hand = toLocal(placed ? [0.55, 2.55, 0.7] : t < 33.7 ? [0.7, 2.6, 1.6] : [0.55, 2.95, 1.1], CIT, rot);
+  const hw = mixV(mixV([0.7, 2.6, 1.9], [0.55, 2.95, 1.25], sm(t, 33.6, 34.4)), [0.6, 2.55, 1.6], sm(t, 34.85, 35.3));
+  const hand = toLocal(hw, CIT, rot);
   return (
-    <Shot light={LIGHT.office} k={k} a={{ pos: [-2.8, 6.6, -5.4], target: [0.4, 2.8, 1.6], fov: 44 }} b={{ pos: [-2.5, 6.4, -4.8], target: [0.4, 2.8, 1.6], fov: 43 }}>
+    <Shot light={LIGHT.office} k={k} a={{ fit: 4.8, pos: [-2.8, 6.6, -5.4], target: [0.4, 2.8, 1.6], fov: 44 }} b={{ fit: 4.8, pos: [-2.5, 6.4, -4.8], target: [0.4, 2.8, 1.6], fov: 43 }}>
       <OfficeCorner side={0} />
       <Desk pos={[0, 0, 0]} />
       <Who id="official" pos={[0, 0, -2.4]} pose={{ face: 'smug', handL: [-0.6, 2.55, 1.2], handR: [0.6, 2.55, 1.2] }} />
@@ -394,7 +436,7 @@ const S13: React.FC<SP> = ({ t, k }) => {
   const caught = t >= 36.2; // «coin»
   const cy = lerp(8, 2.75, clamp01((t - 35.7) / 0.5) ** 2);
   return (
-    <Shot light={LIGHT.office} k={k} a={{ pos: [0.9, 4.0, 4.8], target: [0.3, 3.5, -1.5], fov: 42 }} b={{ pos: [0.8, 4.0, 4.0], target: [0.3, 3.5, -1.5], fov: 41 }}>
+    <Shot light={LIGHT.office} k={k} a={{ fit: 3.2, pos: [0.9, 4.0, 4.8], target: [0.3, 3.5, -1.5], fov: 42 }} b={{ fit: 3.2, pos: [0.8, 4.0, 4.0], target: [0.3, 3.5, -1.5], fov: 41 }}>
       <OfficeCorner />
       <Who
         id="citizen1"
@@ -420,7 +462,7 @@ const S14: React.FC<SP> = ({ t, k }) => (
   <Shot light={LIGHT.office} k={k} a={{ pos: [0.3, 2.5, 6.5], target: [0, 4.2, -5], fov: 48 }} b={{ pos: [0.2, 2.6, 5.4], target: [0, 4.3, -5], fov: 47 }}>
     <OfficeCorner />
     <Desk pos={[0, 0, -3]} />
-    <Who id="official" pos={[0, 0, -5.4]} pose={{ face: 'grin', handL: [-1.55, 4.0 + Math.sin(t * 9) * 0.12, 0.5], handR: [1.55, 4.0 + Math.cos(t * 9) * 0.12, 0.5], hips: [0, Math.abs(Math.sin(t * 6)) * 0.12, 0] }} />
+    <Who id="official" pos={[0, 0, -5.4]} pose={{ face: 'grin', handL: [-1.55, 4.0 + Math.sin(t * 3.5) * 0.12, 0.5], handR: [1.55, 4.0 + Math.sin(t * 3.5 + 1) * 0.12, 0.5], hips: [0, (1 - Math.cos(t * 4)) * 0.05, 0] }} />
     <CoinRain t={t} t0={37.0} n={40} x={[-5, 5]} z={[-7, -1]} top={12} />
   </Shot>
 );
@@ -464,18 +506,18 @@ const S16: React.FC<SP> = ({ t, k }) => {
     <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ pos: [3.6, 4.2, 8], target: [-1.2, 3.8, -2.5], fov: 44 }} b={{ pos: [3.0, 4.1, 6.8], target: [-1.2, 3.8, -2.5], fov: 43 }}>
       <AlleyCorner />
       {/* the corner they hide behind */}
-      <Toon geometry={G.box} color="#3f4890" position={[-4.6, 6.5, -2]} scale={[4, 13, 3]} line={3} />
-      <Who id="inspector2" pos={[-1.9, 0, -3.4]} rotY={0.7} pose={{ face: scared ? 'panic' : 'o', lean: 0.12 }} />
-      <Who id="inspector" pos={[-0.9, 0, -2.0]} rotY={0.8} pose={{ face: scared ? 'panic' : 'o', lean: 0.15, ...notebookHands }} />
+      <Toon geometry={G.box} color="#3f4890" position={[-5.4, 6.5, -2.4]} scale={[4, 13, 3]} line={3} />
+      <Who id="inspector" pos={[-1.4, 0, -2.4]} rotY={0.55} pose={{ face: scared ? 'panic' : 'o', lean: 0.12, ...notebookHands }} />
+      <Who id="inspector2" pos={[0.9, 0, -2.2]} rotY={0.45} pose={{ face: scared ? 'panic' : 'o', lean: 0.12 }} />
     </Shot>
   );
 };
 
 const S17: React.FC<SP> = ({ t, k }) => {
-  const pet = Math.sin(t * 5) * 0.12;
+  const pet = Math.sin(t * 2.2) * 0.07; // slow, gentle petting (never jerky, QA-043)
   const wink = t >= 48.7 && t < 49.1; // «income»
   return (
-    <Shot light={LIGHT.night} lamps={[{ pos: [2, 6, 2], color: '#ffbf60', power: 30, dist: 14 }]} k={k} a={{ pos: [0.6, 3.6, 3.2], target: [0, 3.1, -2], fov: 42 }} b={{ pos: [0.5, 3.6, 2.5], target: [0, 3.1, -2], fov: 41 }}>
+    <Shot light={LIGHT.night} lamps={[{ pos: [2, 6, 2], color: '#ffbf60', power: 30, dist: 14 }]} k={k} a={{ fit: 3.2, pos: [0.6, 3.6, 5.2], target: [0, 3.3, -2], fov: 42 }} b={{ fit: 3.2, pos: [0.5, 3.6, 4.4], target: [0, 3.3, -2], fov: 41 }}>
       <AlleyCorner />
       <Who id="catcher" pos={[0, 0, -2]} pose={{ face: wink ? 'squint' : 'smug', handL: [-0.45, 2.25, 1.05], handR: [0.3, 2.85 + pet, 1.05] }} />
       <RatA pos={[0, 2.05, -0.95]} t={t} pose={{ face: 'happy' }} scale={1.05} />
@@ -490,7 +532,7 @@ const S18: React.FC<SP> = ({ t, k }) => {
   const fall = clamp01((t - 51.6) / 0.4);
   const Trap = O('trap');
   return (
-    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ pos: [-0.6, 2.5, 3.4], target: [-0.5, 1.6, -2], fov: 42 }} b={{ pos: [-0.6, 2.4, 2.7], target: [-0.5, 1.6, -2], fov: 41 }}>
+    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ fit: 3.6, pos: [-0.6, 2.5, 3.4], target: [-0.5, 1.6, -2], fov: 42 }} b={{ fit: 3.6, pos: [-0.6, 2.4, 2.7], target: [-0.5, 1.6, -2], fov: 41 }}>
       <AlleyCorner />
       <Tx geometry={box} map={plankTex('#8a6a44', [2, 1])} position={[0, 0.6, -2]} scale={[2.6, 1.2, 1.6]} line={3} />
       <RatA pos={[0, 1.2, -2]} rotY={Math.PI / 2} t={t} cut={cut} pose={{ face: cut ? 'scared' : 'happy' }} />
@@ -512,7 +554,7 @@ const S19: React.FC<SP> = ({ t, k }) => {
   const dive = clamp01((t - 53.8) / 0.35);
   const p: V3 = [lerp(3.6, 0.3, run), -dive * 1.2, lerp(1.4, -1.7, run)];
   return (
-    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ pos: [2.4, 6.8, 4.8], target: [0.4, 0, -1.6], fov: 44 }} b={{ pos: [1.8, 6.2, 3.8], target: [0.3, 0, -1.8], fov: 43 }}>
+    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ fit: 4.5, pos: [2.4, 6.8, 4.8], target: [0.4, 0, -1.6], fov: 44 }} b={{ fit: 4.5, pos: [1.8, 6.2, 3.8], target: [0.3, 0, -1.8], fov: 43 }}>
       <AlleyCorner />
       <OpenManhole pos={[0, 0, -2]} />
       {dive < 1 && <RatA pos={p} rotY={face([3.6, 0, 1.4], [0, 0, -2])} t={t} run={run > 0 && run < 1} cut pose={{ face: 'happy' }} pitch={dive * 1.2} />}
@@ -529,10 +571,7 @@ const S19: React.FC<SP> = ({ t, k }) => {
 
 const S20: React.FC<SP> = ({ t, k }) => {
   const F = O('farm');
-  const inT = clamp01((t - 58.0) / 1.1);
-  const there = inT >= 1;
   const shock = t >= 59.3;
-  const wave = t >= 60.0; // «farms»
   return (
     <Shot light={LIGHT.sunset} k={k} a={{ pos: [2.2, 4.6, 12.5], target: [0.6, 3.4, -3], fov: 48 }} b={{ pos: [1.6, 4.5, 10.8], target: [0.6, 3.4, -3], fov: 47 }}>
       <FarmCorner />
@@ -541,16 +580,17 @@ const S20: React.FC<SP> = ({ t, k }) => {
           <F />
         </group>
       ))}
-      <Who id="farmer" pos={[-0.6, 0, -3]} rotY={0.15} pose={mix(breathe(t, 3), wave ? { face: 'smug', handL: [-0.25, 2.5, 0.9], handR: [1.55, 4.0, 0.5 + Math.sin(t * 10) * 0.3] } : { face: 'smug', handL: [-0.25, 2.5, 0.9], handR: [0.25, 2.45, 0.92] })} />
+      <Who id="farmer" pos={[-0.6, 0, -3]} rotY={0.15} pose={mix(breathe(t, 3), { face: 'smug', handL: [-0.25, 2.5, 0.9], handR: mixV([0.25, 2.45, 0.92], [1.55, 4.0, 0.5 + Math.sin(t * 4) * 0.25], sm(t, 60.0, 60.4)) })} />
       {[0, 1].map((i) => {
-        const x = lerp(10 + i * 1.6, 3.4 + i * 1.8, inT);
+        const wk = walkTo(t, 58.0, 59.2, [10 + i * 1.6, 0, -0.6 + i * 0.8], [3.4 + i * 1.8, 0, -0.6 + i * 0.8], i);
+        const sh = sm(t, 59.3, 59.7);
         return (
           <Who
             key={i}
             id={i ? 'inspector2' : 'inspector'}
-            pos={[x, 0, -0.6 + i * 0.8]}
-            rotY={there ? -0.7 : -Math.PI / 2}
-            pose={mix(there ? breathe(t, i) : walkPose(t * 2.6 + i, 0.9), { face: shock ? 'panic' : 'o' }, shock && i === 0 ? { handL: [-1.5, 3.8, 0.5], handR: [1.5, 3.8, 0.5] } : {})}
+            pos={wk.pos}
+            rotY={lerp(-Math.PI / 2, -0.7, sm(t, 59.0, 59.4))}
+            pose={mix(wk.pose, breathe(t, i), { face: shock ? 'panic' : 'o' }, i === 0 ? { handL: mixV([-0.68, 1.8, 0.15], [-1.5, 3.8, 0.5], sh), handR: mixV([0.68, 1.8, 0.15], [1.5, 3.8, 0.5], sh) } : {})}
           />
         );
       })}
@@ -560,7 +600,6 @@ const S20: React.FC<SP> = ({ t, k }) => {
 
 const S21: React.FC<SP> = ({ t, k }) => {
   const torn = clamp01((t - 62.2) / 0.6); // «scrapped»
-  const panic = t >= 63.0;
   return (
     <Shot light={LIGHT.office} k={k} a={{ pos: [0.6, 4.8, 8.4], target: [-0.6, 4.6, -7], fov: 46 }} b={{ pos: [0.5, 4.7, 7.4], target: [-0.6, 4.6, -7], fov: 45 }}>
       <OfficeCorner flag={false} />
@@ -574,10 +613,10 @@ const S21: React.FC<SP> = ({ t, k }) => {
         );
       })}
       <Who
-        id="official"
+        id="governor"
         pos={[-3.4, 0, -6.6]}
         rotY={0.5}
-        pose={mix(breathe(t, 9), panic ? { face: 'panic', handL: [-1.55, 4.0 + Math.sin(t * 14) * 0.15, 0.5], handR: [1.55, 4.0 + Math.cos(t * 14) * 0.15, 0.5] } : { face: 'panic', handL: [-0.8, 3.0, 1.2], handR: [0.8, 3.0, 1.2] })}
+        pose={mix(breathe(t, 9), { face: 'panic', handL: mixV([-0.8, 3.0, 1.2], [-1.55, 4.0 + Math.sin(t * 4.5) * 0.12, 0.5], sm(t, 63.0, 63.4)), handR: mixV([0.8, 3.0, 1.2], [1.55, 4.0 + Math.sin(t * 4.5 + 1) * 0.12, 0.5], sm(t, 63.0, 63.4)) })}
       />
     </Shot>
   );
@@ -612,7 +651,7 @@ const S24: React.FC<SP> = ({ t, k }) => (
   <Shot light={LIGHT.office} k={k} a={{ pos: [0.8, 5, 9], target: [-0.4, 5, -8], fov: 46 }} b={{ pos: [0.6, 5, 7.8], target: [-0.4, 5, -8], fov: 45 }}>
     <OfficeCorner />
     <WallCard map={chartTex()} pos={[1.2, 6.2, -9.6]} size={[7, 5]} frame="#2a2420" />
-    <Who id="official" pos={[-2.2, 0, -6]} rotY={0.45} pose={mix(breathe(t, 4), { face: 'o', look: [0.6, 0.3], handL: [-0.75, 2.1, 0.2], handR: [1.35, 4.2, 0.6] })} />
+    <Who id="governor" pos={[-2.2, 0, -6]} rotY={0.45} pose={mix(breathe(t, 4), { face: 'o', look: [0.6, 0.3], handL: [-0.75, 2.1, 0.2], handR: [1.35, 4.2, 0.6] })} />
   </Shot>
 );
 
@@ -629,7 +668,7 @@ const CoinHill: React.FC = () => (
 );
 
 const S25: React.FC<SP> = ({ t, k }) => (
-  <Shot light={LIGHT.office} lamps={[{ pos: [0, 8, 2], color: '#ffe0a0', power: 25, dist: 16 }]} k={k} a={{ pos: [0.6, 4.0, 5.5], target: [0.4, 3.4, -2], fov: 42 }} b={{ pos: [0.8, 4.8, 10], target: [0.4, 3.4, -2.5], fov: 44 }}>
+  <Shot light={LIGHT.office} lamps={[{ pos: [0, 8, 2], color: '#ffe0a0', power: 25, dist: 16 }]} k={k} a={{ fit: 4.6, pos: [0.8, 4.2, 7.5], target: [0.6, 3.5, -2], fov: 42 }} b={{ fit: 4.6, pos: [0.8, 4.8, 10], target: [0.4, 3.4, -2.5], fov: 44 }}>
     <OfficeCorner />
     <group position={[2.6, 0, -3.6]}>
       <CoinHill />
