@@ -47,6 +47,8 @@ const Rig: React.FC<{ a: Frame; b: Frame; k: number }> = ({ a, b, k }) => {
     const halfW = Math.tan((f * Math.PI) / 360) * aspect;
     const need = fit / 2 / halfW;
     if (need > d) m *= need / d;
+    // wide 16:9: a little more air above the heads
+    if (aspect > 1) m *= 1.22;
     camera.aspect = aspect;
     camera.position.set(tg[0] + (p[0] - tg[0]) * m, tg[1] + (p[1] - tg[1]) * m, tg[2] + (p[2] - tg[2]) * m);
     camera.lookAt(tg[0], tg[1], tg[2]);

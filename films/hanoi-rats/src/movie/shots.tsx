@@ -239,7 +239,7 @@ const S04: React.FC<SP> = ({ t, k }) => {
   // the stump is at the rat's rear: rat at the origin facing +x → rear ≈ (−0.66, 0.37, 0)
   const lensAt: V3 = [-1.0, 0.5, 0.42];
   return (
-    <Shot light={LIGHT.day} k={k} a={{ pos: [-2.8, 1.1, 2.6], target: [-0.6, 0.5, 0], fov: 34 }} b={{ pos: [-2.4, 1.0, 2.2], target: [-0.6, 0.45, 0], fov: 33 }}>
+    <Shot light={LIGHT.day} k={k} a={{ fit: 1.9, pos: [-2.8, 1.1, 2.6], target: [-0.6, 0.5, 0], fov: 34 }} b={{ fit: 1.9, pos: [-2.4, 1.0, 2.2], target: [-0.6, 0.45, 0], fov: 33 }}>
       <StreetCorner sign={false} />
       <RatA pos={[0, 0, 0]} rotY={Math.PI / 2} t={t} cut pose={{ face: 'sly' }} />
       <group position={mixV([-2.0, 2.2, 1.2], lensAt, m)} rotation={[-0.18, -0.7, 0]}>
@@ -394,7 +394,7 @@ const S10: React.FC<SP> = ({ t, k }) => {
 const S11: React.FC<SP> = ({ t, k }) => {
   const up = t >= 31.85; // «one simple rule»
   return (
-    <Shot light={LIGHT.office} k={k} a={{ pos: [0.7, 4.7, 1.2], target: [0, 4.1, -5.4], fov: 40 }} b={{ pos: [0.6, 4.6, 0.2], target: [0, 4.1, -5.4], fov: 39 }}>
+    <Shot light={LIGHT.office} k={k} a={{ fit: 3.4, pos: [0.7, 4.7, 1.2], target: [0, 4.1, -5.4], fov: 40 }} b={{ fit: 3.4, pos: [0.6, 4.6, 0.2], target: [0, 4.1, -5.4], fov: 39 }}>
       <OfficeCorner />
       <Desk pos={[0, 0, -3]} />
       <Who
@@ -418,7 +418,7 @@ const S12: React.FC<SP> = ({ t, k }) => {
   const hw = mixV(mixV([0.7, 2.6, 1.9], [0.55, 2.95, 1.25], sm(t, 33.6, 34.4)), [0.6, 2.55, 1.6], sm(t, 34.85, 35.3));
   const hand = toLocal(hw, CIT, rot);
   return (
-    <Shot light={LIGHT.office} k={k} a={{ pos: [-2.8, 6.6, -5.4], target: [0.4, 2.8, 1.6], fov: 44 }} b={{ pos: [-2.5, 6.4, -4.8], target: [0.4, 2.8, 1.6], fov: 43 }}>
+    <Shot light={LIGHT.office} k={k} a={{ fit: 4.8, pos: [-2.8, 6.6, -5.4], target: [0.4, 2.8, 1.6], fov: 44 }} b={{ fit: 4.8, pos: [-2.5, 6.4, -4.8], target: [0.4, 2.8, 1.6], fov: 43 }}>
       <OfficeCorner side={0} />
       <Desk pos={[0, 0, 0]} />
       <Who id="official" pos={[0, 0, -2.4]} pose={{ face: 'smug', handL: [-0.6, 2.55, 1.2], handR: [0.6, 2.55, 1.2] }} />
@@ -436,7 +436,7 @@ const S13: React.FC<SP> = ({ t, k }) => {
   const caught = t >= 36.2; // «coin»
   const cy = lerp(8, 2.75, clamp01((t - 35.7) / 0.5) ** 2);
   return (
-    <Shot light={LIGHT.office} k={k} a={{ pos: [0.9, 4.0, 4.8], target: [0.3, 3.5, -1.5], fov: 42 }} b={{ pos: [0.8, 4.0, 4.0], target: [0.3, 3.5, -1.5], fov: 41 }}>
+    <Shot light={LIGHT.office} k={k} a={{ fit: 3.2, pos: [0.9, 4.0, 4.8], target: [0.3, 3.5, -1.5], fov: 42 }} b={{ fit: 3.2, pos: [0.8, 4.0, 4.0], target: [0.3, 3.5, -1.5], fov: 41 }}>
       <OfficeCorner />
       <Who
         id="citizen1"
@@ -517,7 +517,7 @@ const S17: React.FC<SP> = ({ t, k }) => {
   const pet = Math.sin(t * 2.2) * 0.07; // slow, gentle petting (never jerky, QA-043)
   const wink = t >= 48.7 && t < 49.1; // «income»
   return (
-    <Shot light={LIGHT.night} lamps={[{ pos: [2, 6, 2], color: '#ffbf60', power: 30, dist: 14 }]} k={k} a={{ pos: [0.6, 3.6, 5.2], target: [0, 3.3, -2], fov: 42 }} b={{ pos: [0.5, 3.6, 4.4], target: [0, 3.3, -2], fov: 41 }}>
+    <Shot light={LIGHT.night} lamps={[{ pos: [2, 6, 2], color: '#ffbf60', power: 30, dist: 14 }]} k={k} a={{ fit: 3.2, pos: [0.6, 3.6, 5.2], target: [0, 3.3, -2], fov: 42 }} b={{ fit: 3.2, pos: [0.5, 3.6, 4.4], target: [0, 3.3, -2], fov: 41 }}>
       <AlleyCorner />
       <Who id="catcher" pos={[0, 0, -2]} pose={{ face: wink ? 'squint' : 'smug', handL: [-0.45, 2.25, 1.05], handR: [0.3, 2.85 + pet, 1.05] }} />
       <RatA pos={[0, 2.05, -0.95]} t={t} pose={{ face: 'happy' }} scale={1.05} />
@@ -532,7 +532,7 @@ const S18: React.FC<SP> = ({ t, k }) => {
   const fall = clamp01((t - 51.6) / 0.4);
   const Trap = O('trap');
   return (
-    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ pos: [-0.6, 2.5, 3.4], target: [-0.5, 1.6, -2], fov: 42 }} b={{ pos: [-0.6, 2.4, 2.7], target: [-0.5, 1.6, -2], fov: 41 }}>
+    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ fit: 3.6, pos: [-0.6, 2.5, 3.4], target: [-0.5, 1.6, -2], fov: 42 }} b={{ fit: 3.6, pos: [-0.6, 2.4, 2.7], target: [-0.5, 1.6, -2], fov: 41 }}>
       <AlleyCorner />
       <Tx geometry={box} map={plankTex('#8a6a44', [2, 1])} position={[0, 0.6, -2]} scale={[2.6, 1.2, 1.6]} line={3} />
       <RatA pos={[0, 1.2, -2]} rotY={Math.PI / 2} t={t} cut={cut} pose={{ face: cut ? 'scared' : 'happy' }} />
@@ -554,7 +554,7 @@ const S19: React.FC<SP> = ({ t, k }) => {
   const dive = clamp01((t - 53.8) / 0.35);
   const p: V3 = [lerp(3.6, 0.3, run), -dive * 1.2, lerp(1.4, -1.7, run)];
   return (
-    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ pos: [2.4, 6.8, 4.8], target: [0.4, 0, -1.6], fov: 44 }} b={{ pos: [1.8, 6.2, 3.8], target: [0.3, 0, -1.8], fov: 43 }}>
+    <Shot light={LIGHT.night} lamps={nightLamps} k={k} a={{ fit: 4.5, pos: [2.4, 6.8, 4.8], target: [0.4, 0, -1.6], fov: 44 }} b={{ fit: 4.5, pos: [1.8, 6.2, 3.8], target: [0.3, 0, -1.8], fov: 43 }}>
       <AlleyCorner />
       <OpenManhole pos={[0, 0, -2]} />
       {dive < 1 && <RatA pos={p} rotY={face([3.6, 0, 1.4], [0, 0, -2])} t={t} run={run > 0 && run < 1} cut pose={{ face: 'happy' }} pitch={dive * 1.2} />}
@@ -668,7 +668,7 @@ const CoinHill: React.FC = () => (
 );
 
 const S25: React.FC<SP> = ({ t, k }) => (
-  <Shot light={LIGHT.office} lamps={[{ pos: [0, 8, 2], color: '#ffe0a0', power: 25, dist: 16 }]} k={k} a={{ pos: [0.8, 4.2, 7.5], target: [0.6, 3.5, -2], fov: 42 }} b={{ pos: [0.8, 4.8, 10], target: [0.4, 3.4, -2.5], fov: 44 }}>
+  <Shot light={LIGHT.office} lamps={[{ pos: [0, 8, 2], color: '#ffe0a0', power: 25, dist: 16 }]} k={k} a={{ fit: 4.6, pos: [0.8, 4.2, 7.5], target: [0.6, 3.5, -2], fov: 42 }} b={{ fit: 4.6, pos: [0.8, 4.8, 10], target: [0.4, 3.4, -2.5], fov: 44 }}>
     <OfficeCorner />
     <group position={[2.6, 0, -3.6]}>
       <CoinHill />
