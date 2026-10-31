@@ -289,26 +289,95 @@ export const Tunnel: React.FC<{ len?: number }> = ({ len = 70 }) => {
   );
 };
 
-/** Cobblestone street corner with a yellow colonial facade. */
+/** Balcony with a railing (bars) under a window. */
+const Balcony: React.FC<{ pos: V3; w?: number }> = ({ pos, w = 3 }) => (
+  <group position={pos}>
+    <Toon geometry={G.box} color="#e8d9b8" scale={[w, 0.25, 1.1]} line={2} />
+    <Toon geometry={G.box} color="#2b2b33" position={[0, 0.95, 0.5]} scale={[w, 0.08, 0.08]} line={1} />
+    {Array.from({ length: Math.round(w * 3) }, (_, i) => (
+      <Toon key={i} geometry={G.box} color="#2b2b33" position={[-w / 2 + 0.17 + i * 0.33, 0.5, 0.5]} scale={[0.05, 0.85, 0.05]} line={0} />
+    ))}
+  </group>
+);
+
+/** Open Vietnamese shop: counter, shelves of jars and boxes, hanging goods, warm light inside. */
+const Shop: React.FC<{ pos: V3 }> = ({ pos }) => (
+  <group position={pos}>
+    {/* dark interior with shelves */}
+    <Toon geometry={G.box} color="#6a3a22" position={[0, 2.3, -0.3]} scale={[6.4, 4.6, 0.2]} line={2} />
+    {[1.2, 2.4, 3.6].map((y) => (
+      <group key={y}>
+        <Toon geometry={G.box} color="#8e5d33" position={[0, y, 0]} scale={[6, 0.12, 0.6]} line={2} />
+        {Array.from({ length: 9 }, (_, i) => (
+          <Toon key={i} geometry={i % 3 ? G.cyl : G.box} color={['#e84a3a', '#f2b233', '#5fa58f', '#f4ead6', '#3f6fd8'][(i + Math.round(y)) % 5]} position={[-2.6 + i * 0.65, y + 0.32, 0.05]} scale={i % 3 ? [0.2, 0.5, 0.2] : [0.45, 0.5, 0.35]} line={2} />
+        ))}
+      </group>
+    ))}
+    {/* counter with rice baskets */}
+    <Toon geometry={G.box} color="#a8743c" position={[0, 0.6, 1.4]} scale={[5.6, 1.2, 0.9]} line={3} />
+    {[-1.8, 0, 1.8].map((x, i) => (
+      <group key={x} position={[x, 1.25, 1.4]}>
+        <Toon geometry={G.cup} color="#c9a05a" scale={[0.55, 0.35, 0.55]} line={2} />
+        <Toon geometry={G.hemi} color={['#f4ead6', '#d9a94e', '#7fae4a'][i]} position={[0, 0.15, 0]} scale={[0.5, 0.25, 0.5]} line={1} />
+      </group>
+    ))}
+    {/* frame + hanging lanterns and goods */}
+    {[-1, 1].map((sd) => (
+      <Toon key={sd} geometry={G.box} color="#7a3a22" position={[sd * 3.3, 2.3, 0.6]} scale={[0.35, 4.6, 0.35]} line={3} />
+    ))}
+    <Toon geometry={G.box} color="#7a3a22" position={[0, 4.7, 0.6]} scale={[7, 0.35, 0.35]} line={3} />
+    <PaperLantern pos={[-2, 3.9, 1.0]} />
+    <PaperLantern pos={[2, 3.9, 1.0]} color="#f2b233" />
+    <Tx geometry={box} map={stripeTex('#f4ead6', '#d9443a', [3, 1])} position={[0, 5.4, 1.6]} rotation={[0.5, 0, 0]} scale={[7.6, 2.2, 0.12]} line={3} />
+  </group>
+);
+
+/** A three-storey colonial facade section: cornices, shuttered windows, balconies. */
+const Facade: React.FC<{ x: number; w: number; color: string; shutter?: string; z?: number }> = ({ x, w, color, shutter = '#2f7d5b', z = -10.75 }) => {
+  const n = Math.max(2, Math.round(w / 4));
+  return (
+    <group position={[x, 0, z]}>
+      <Tx geometry={box} map={plasterTex(color, [2, 3])} position={[0, 11, -0.05]} scale={[w, 22, 0.3]} line={2} />
+      {[6.2, 11.9, 17.6].map((y) => (
+        <Toon key={y} geometry={G.box} color="#f4ead6" position={[0, y, 0.2]} scale={[w + 0.3, 0.35, 0.5]} line={2} />
+      ))}
+      <Toon geometry={G.box} color="#f4ead6" position={[0, 22.1, 0.25]} scale={[w + 0.6, 0.6, 0.8]} line={3} />
+      {[8.8, 14.6, 19.9].map((y, row) =>
+        Array.from({ length: n }, (_, i) => {
+          const wx = -w / 2 + (w / n) * (i + 0.5);
+          return (
+            <group key={`${row}-${i}`}>
+              <ShutterWindow pos={[wx, y, 0.15]} color={shutter} lit={(i + row) % 3 === 0} />
+              {row === 0 && <Balcony pos={[wx, y - 1.9, 0.6]} w={2.8} />}
+            </group>
+          );
+        }),
+      )}
+    </group>
+  );
+};
+
+/** Hanoi street corner: three-storey colonial houses, an open shop, lanterns, wires, plants. */
 export const StreetCorner: React.FC<{ sign?: boolean }> = ({ sign = true }) => (
   <group>
-    <Room w={60} d={22} h={14} floor={stoneTex('#c9b48c', [20, 12], 32)} wall={plasterTex('#f2c14e', [8, 2])} side={0} closed front={30} sideWall={plasterTex('#e9b84a', [8, 2])} />
-    <Toon geometry={G.box} color="#b98a3a" position={[0, 0.25, -10.4]} scale={[30, 0.5, 1.2]} line={2} />
-    {[-8, -2.6, 2.6, 8].map((x) => (
-      <ShutterWindow key={x} pos={[x, 7.6, -10.7]} />
+    <Room w={60} d={22} h={24} floor={stoneTex('#c9b48c', [20, 12], 32)} wall={plasterTex('#f2c14e', [8, 3])} side={0} closed front={30} sideWall={plasterTex('#e9b84a', [8, 3])} />
+    <Toon geometry={G.box} color="#b98a3a" position={[0, 0.25, -10.4]} scale={[60, 0.5, 1.2]} line={2} />
+    <Facade x={-15} w={14} color="#f2c14e" />
+    <Facade x={0} w={16} color="#ef9fb0" shutter="#3a6fb0" z={-10.6} />
+    <Facade x={15} w={14} color="#8fcbbd" shutter="#b8452f" />
+    <Shop pos={[-1, 0, -9.9]} />
+    {sign && <Tx geometry={plane} map={cardTex('hanoi-sign', [{ t: 'HÀ NỘI · 1902', size: 64, color: '#f2c94c' }], '#8a1c14', '#f2c94c', 640, 140)} position={[-1, 6.9, -9.3]} scale={[6.4, 1.4, 1]} line={0} />}
+    {/* a shop sign on the left house and a lamp */}
+    <Tx geometry={box} map={cardTex('pho-sign', [{ t: 'PHỞ', size: 120, color: '#f4ead6' }], '#2f7d5b', '#f4ead6', 360, 200)} position={[-13, 4.2, -10.2]} scale={[3.2, 1.8, 0.15]} line={3} />
+    <Tx geometry={box} map={cardTex('tra-sign', [{ t: 'TRÀ', size: 120, color: '#8a1c14' }], '#f6e7b8', '#8a1c14', 360, 200)} position={[13, 4.2, -10.2]} scale={[3.2, 1.8, 0.15]} line={3} />
+    {/* lantern wires across the street */}
+    {[-9, -3, 3, 9].map((x, i) => (
+      <PaperLantern key={x} pos={[x, 9.4 - (i % 2) * 0.3, -6]} color={i % 2 ? '#f2b233' : '#e84a3a'} />
     ))}
-    {/* shop front with awning */}
-    <group position={[-1, 0, -10.7]}>
-      <Toon geometry={G.box} color="#7a3a22" position={[0, 2.2, 0]} scale={[7, 4.4, 0.3]} line={3} />
-      <Glow geometry={plane} color="#ffd88a" position={[0, 2.2, 0.17]} scale={[6.2, 3.6, 1]} />
-      <Tx geometry={box} map={stripeTex('#f4ead6', '#d9443a', [3, 1])} position={[0, 4.8, 1.0]} rotation={[0.5, 0, 0]} scale={[7.6, 2.2, 0.12]} line={3} />
-      {sign && <Tx geometry={plane} map={cardTex('hanoi-sign', [{ t: 'HÀ NỘI · 1902', size: 64, color: '#f2c94c' }], '#8a1c14', '#f2c94c', 640, 140)} position={[0, 5.7, 0.3]} scale={[6.4, 1.4, 1]} line={0} />}
-    </group>
-    {[-6, 4.5].map((x, i) => (
-      <PaperLantern key={x} pos={[x, 6.2 - i * 0.4, -8.6]} color={i ? '#f2b233' : '#e84a3a'} />
-    ))}
+    <Toon geometry={G.cyl} color="#2a2420" position={[0, 10.2, -6]} rotation={[0, 0, Math.PI / 2]} scale={[0.025, 30, 0.025]} line={0} />
     <Plant pos={[-11, 0, -8.8]} s={1.6} />
     <Plant pos={[10.5, 0, -8.9]} s={1.4} />
+    <Plant pos={[6.5, 0, -9.2]} s={1.1} />
   </group>
 );
 
@@ -324,6 +393,39 @@ export const OfficeCorner: React.FC<{ flag?: boolean; side?: -1 | 1 | 0 }> = ({ 
         ))}
       </group>
     )}
+    {/* bookshelf, filing cabinet, window, rug, hat stand, ceiling lamp, plant */}
+    <group position={[-11.2, 0, -9.3]}>
+      <Toon geometry={G.box} color="#6a3a22" position={[0, 3.3, 0]} scale={[3.6, 6.6, 1.0]} line={3} />
+      {[1.2, 2.8, 4.4, 6.0].map((y, r) =>
+        Array.from({ length: 8 }, (_, i) => (
+          <Toon key={`${r}${i}`} geometry={G.box} color={['#c8302c', '#2c4fa3', '#f2b233', '#3f8f73', '#7a3a22'][(i + r) % 5]} position={[-1.4 + i * 0.4, y + 0.1 + (i % 2) * 0.05, 0.4]} scale={[0.32, 1.05 + (i % 3) * 0.12, 0.6]} line={2} />
+        )),
+      )}
+    </group>
+    <group position={[11.4, 0, -8.8]}>
+      <Toon geometry={G.box} color="#7d8a96" position={[0, 2.2, 0]} scale={[2.2, 4.4, 1.6]} line={3} />
+      {[1.0, 2.2, 3.4].map((y) => (
+        <Toon key={y} geometry={G.box} color="#d9b44a" position={[0, y, 0.82]} scale={[0.6, 0.12, 0.08]} line={1} />
+      ))}
+      <Plant pos={[0, 4.4, 0]} s={0.8} />
+    </group>
+    <group position={[14.8, 7.0, -2]} rotation={[0, -Math.PI / 2, 0]}>
+      <Toon geometry={G.box} color="#f4ead6" scale={[4.2, 5.2, 0.25]} line={3} />
+      <Glow geometry={plane} color="#bfe6ff" position={[0, 0, 0.14]} scale={[3.6, 4.6, 1]} />
+      <Toon geometry={G.box} color="#f4ead6" position={[0, 0, 0.18]} scale={[0.12, 4.6, 0.06]} line={1} />
+      <Toon geometry={G.box} color="#f4ead6" position={[0, 0, 0.18]} scale={[3.6, 0.12, 0.06]} line={1} />
+    </group>
+    <Toon geometry={G.cyl} color="#a8323a" position={[0, 0.02, 1.5]} scale={[6, 0.04, 4.2]} line={2} />
+    <Toon geometry={G.cyl} color="#e0a83a" position={[0, 0.05, 1.5]} scale={[5.2, 0.02, 3.5]} line={0} />
+    <group position={[-13.4, 0, -5]}>
+      <Toon geometry={G.cyl} color="#4a2a18" position={[0, 2.6, 0]} scale={[0.08, 5.2, 0.08]} line={2} />
+      <Toon geometry={G.hemi} color="#2a2420" position={[0, 5.2, 0]} scale={[0.5, 0.35, 0.5]} line={2} />
+    </group>
+    <group position={[0, 12.6, -1]}>
+      <Toon geometry={G.cyl} color="#2a2420" position={[0, 0.6, 0]} scale={[0.03, 1.2, 0.03]} line={0} />
+      <Toon geometry={G.cone} color="#2f7d5b" scale={[1.0, 0.7, 1.0]} line={3} />
+      <Glow geometry={G.sphere} color="#fff1b8" position={[0, -0.35, 0]} scale={0.25} />
+    </group>
     <group position={[-6, 9.5, -9.7]}>
       <Toon geometry={G.cyl} color="#f4ead6" rotation={[Math.PI / 2, 0, 0]} scale={[1.1, 0.15, 1.1]} line={4} />
       <Toon geometry={G.box} color="#1b1b1f" position={[0, 0.35, 0.1]} scale={[0.08, 0.7, 0.04]} line={0} />

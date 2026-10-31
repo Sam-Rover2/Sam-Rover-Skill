@@ -242,7 +242,7 @@ const S04: React.FC<SP> = ({ t, k }) => {
     <Shot light={LIGHT.day} k={k} a={{ fit: 1.9, pos: [-2.8, 1.1, 2.6], target: [-0.6, 0.5, 0], fov: 34 }} b={{ fit: 1.9, pos: [-2.4, 1.0, 2.2], target: [-0.6, 0.45, 0], fov: 33 }}>
       <StreetCorner sign={false} />
       <RatA pos={[0, 0, 0]} rotY={Math.PI / 2} t={t} cut pose={{ face: 'sly' }} />
-      <group position={mixV([-2.0, 2.2, 1.2], lensAt, m)} rotation={[-0.18, -0.7, 0]}>
+      <group position={mixV([-2.0, 2.2, 1.2], lensAt, m)} rotation={[-0.18, -0.7, Math.PI / 2]}>
         <Lens />
       </group>
     </Shot>
@@ -300,9 +300,9 @@ const S07: React.FC<SP> = ({ t, k }) => (
       if (t < t0) return null;
       const g = clamp01((t - t0) / 0.35);
       const bob = (1 - Math.cos(t * 4 + i)) * 0.06;
-      return <RatA key={i} scale={1.1 * (0.6 + 0.4 * smooth(g))} pos={[x, 0.6 + bob + (1 - g) * 0.4, z]} rotY={face([x, 0, z], [0, 0, 8]) + (hash(i) - 0.5)} t={t} pose={{ stand: i % 3 === 0, face: 'happy' }} />;
+      return <RatA key={i} scale={1.1 * (0.6 + 0.4 * smooth(g))} pos={[x, 0.6 + bob + (1 - g) * 0.4, z]} rotY={face([x, 0, z], [0, 0, 8]) + (hash(i) - 0.5)} t={t} pose={{ face: 'happy' }} />;
     })}
-    {t >= 16.4 && <RatA pos={[-4.0, 0.6 + (1 - sm(t, 16.4)) * 0.5, 3.4]} rotY={0.5} t={t} pose={{ stand: true, face: t >= 18.7 ? 'sly' : 'happy' }} scale={1.3 * (0.6 + 0.4 * sm(t, 16.4))} />}
+    {t >= 16.4 && <RatA pos={[-4.0, 0.6 + (1 - sm(t, 16.4)) * 0.5, 3.4]} rotY={0.5} t={t} pose={{ face: t >= 18.7 ? 'sly' : 'happy' }} scale={1.3 * (0.6 + 0.4 * sm(t, 16.4))} />}
   </Shot>
 );
 
@@ -323,7 +323,7 @@ const S08: React.FC<SP> = ({ t, k }) => {
       <WallCard map={posterTex()} pos={[-5, 5.6, -9.6]} size={[3.6, 4.6]} />
       <Desk pos={[0, 0, -2.2]} />
       <Toon geometry={G.box} color="#fbf8f0" position={[0.65, BODY.waist + 0.02, -1.6]} rotation={[0, 0.2, 0]} scale={[0.9, 0.02, 1.2]} line={2} />
-      <Who id="official" pos={[0, 0, -4.6]} pose={mix(breathe(t, 2), { face: 'smug', handR: [0.65, lerp(3.2, 2.6, down), 1.5], holdR: <Stamp />, handL: [-0.6, 2.55, 1.2] })} />
+      <Who id="governor" pos={[0, 0, -4.6]} pose={mix(breathe(t, 2), { face: 'smug', handR: [0.65, lerp(3.2, 2.6, down), 1.5], holdR: <Stamp />, handL: [-0.6, 2.55, 1.2] })} />
     </Shot>
   );
 };
@@ -398,7 +398,7 @@ const S11: React.FC<SP> = ({ t, k }) => {
       <OfficeCorner />
       <Desk pos={[0, 0, -3]} />
       <Who
-        id="official"
+        id="governor"
         pos={[0, 0, -5.4]}
         pose={mix(breathe(t, 6), {
           face: 'smug',
@@ -613,7 +613,7 @@ const S21: React.FC<SP> = ({ t, k }) => {
         );
       })}
       <Who
-        id="official"
+        id="governor"
         pos={[-3.4, 0, -6.6]}
         rotY={0.5}
         pose={mix(breathe(t, 9), { face: 'panic', handL: mixV([-0.8, 3.0, 1.2], [-1.55, 4.0 + Math.sin(t * 4.5) * 0.12, 0.5], sm(t, 63.0, 63.4)), handR: mixV([0.8, 3.0, 1.2], [1.55, 4.0 + Math.sin(t * 4.5 + 1) * 0.12, 0.5], sm(t, 63.0, 63.4)) })}
@@ -651,7 +651,7 @@ const S24: React.FC<SP> = ({ t, k }) => (
   <Shot light={LIGHT.office} k={k} a={{ pos: [0.8, 5, 9], target: [-0.4, 5, -8], fov: 46 }} b={{ pos: [0.6, 5, 7.8], target: [-0.4, 5, -8], fov: 45 }}>
     <OfficeCorner />
     <WallCard map={chartTex()} pos={[1.2, 6.2, -9.6]} size={[7, 5]} frame="#2a2420" />
-    <Who id="official" pos={[-2.2, 0, -6]} rotY={0.45} pose={mix(breathe(t, 4), { face: 'o', look: [0.6, 0.3], handL: [-0.75, 2.1, 0.2], handR: [1.35, 4.2, 0.6] })} />
+    <Who id="governor" pos={[-2.2, 0, -6]} rotY={0.45} pose={mix(breathe(t, 4), { face: 'o', look: [0.6, 0.3], handL: [-0.75, 2.1, 0.2], handR: [1.35, 4.2, 0.6] })} />
   </Shot>
 );
 

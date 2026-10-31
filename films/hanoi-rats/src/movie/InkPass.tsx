@@ -94,7 +94,7 @@ export const InkPass: React.FC<{ seed: number; ink?: string; line?: number; vign
         cn: { value: 0.1 },
         cf: { value: 400 },
         uSeed: { value: 0 },
-        uLine: { value: (line * W) / 1080 },
+        uLine: { value: (line * Math.min(W, H)) / 1080 }, // same line weight in 9:16 and 16:9
         uVig: { value: vignette },
         uInk: { value: linear(ink) },
         uVigCol: { value: linear(vigColor) },
