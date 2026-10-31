@@ -95,3 +95,20 @@ export const SIZE = {
   seatH: 0.66, // bench/chair seat = shin length + shoe: feet reach the floor
   tableH: 1.3,
 };
+
+/**
+ * Anatomy of the reference-style characters (rig/Person.tsx), units.
+ * Size furniture and vehicles BY THESE, not by real-world metres: the cartoon legs are long,
+ * so a "real" 0.75 m desk would only reach the knees.
+ */
+export const BODY = {
+  knee: 0.95,
+  hip: 1.86, // seat height ≈ hip × 0.55 … 0.6 when standing next to a chair
+  waist: 2.25, // desk / counter top
+  chest: 2.75,
+  shoulder: 2.9,
+  headTop: 4.5,
+  hand: 1.85, // relaxed hand height
+};
+/** Real-world props (bags, buckets, wheels) are scaled up by this to match the cartoon body. */
+export const PROP = 1.35;

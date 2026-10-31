@@ -41,7 +41,10 @@ export const Model: React.FC<{ file: string; height?: number; restyle?: 'keep' |
         o.traverse((m) => {
           if (!(m instanceof THREE.Mesh)) return;
           const src = (Array.isArray(m.material) ? m.material[0] : m.material) as THREE.MeshStandardMaterial;
-          m.material = toon('#' + (src.color?.getHexString?.() ?? 'cccccc'));
+          // keep the model's own texture, but light it like our cartoons (3-tone toon) + ink outline
+          m.material = src.map
+            ? new THREE.MeshToonMaterial({ map: src.map, color: src.color ?? new THREE.Color('#ffffff'), gradientMap: (toon('#ffffff') as THREE.MeshToonMaterial).gradientMap })
+            : toon('#' + (src.color?.getHexString?.() ?? 'cccccc'));
           const line = new THREE.Mesh(m.geometry, outline(outlinePx));
           add.push([m, line]);
         });
