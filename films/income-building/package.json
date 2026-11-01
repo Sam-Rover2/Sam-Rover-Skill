@@ -1,0 +1,29 @@
+{
+  "name": "income-building",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render": "remotion render src/index.ts film out/film.mp4",
+    "typecheck": "tsc --noEmit",
+    "player": "remotion studio src/index.ts",
+    "review": "node tools/build-review.mjs"
+  },
+  "dependencies": {
+    "@fontsource/nunito": "^5.3.0",
+    "@react-three/fiber": "^8.18.0",
+    "@remotion/cli": "^4.0.539",
+    "@remotion/three": "^4.0.539",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.539",
+    "three": "^0.186.1",
+    "zod": "3.22.3"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "@types/three": "^0.186.0",
+    "typescript": "^5.9.3"
+  }
+}

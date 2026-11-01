@@ -50,3 +50,9 @@ description: Свой стиль пользователя «Ink Diorama Toon» (
 - Руки вне головы и тела; поднятые руки — в стороны. Глаза/очки по поверхности головы.
 - Крысы на четырёх лапах; предметы не уходят в пол (ручку лупы — вверх).
 - Ролик всегда в двух форматах: 9:16 и 16:9.
+
+## Субтитры — переключатель (всегда)
+Композиция ролика получает `schema` (zod) с полем `subtitles: boolean` и `defaultProps={{ subtitles: true }}` — в Remotion Studio справа на панели **Props** появляется галочка; рендер без субтитров: `--props='{"subtitles":false}'`. Пример: `films/income-building/src/building/Film.tsx`.
+
+## Новый ролик
+Копия движка: `films/income-building/` (src/movie, src/film/kit, src/rig, tools). Персонажи — в `src/project.ts` (`CAST`); новые головные уборы (`hardhat`, `tophat`, `gradcap`, `beanie`, `visor`) и костюмы (`suit`, `overalls`, `gown`, `scrubs`, `hoodie`, `vest`) уже есть в `Person.tsx`. Лист персонажей: `src/building/CastSheet.tsx` (общий план: в 9:16 два ряда, в 16:9 один).
