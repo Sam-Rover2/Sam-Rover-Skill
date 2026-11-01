@@ -144,8 +144,8 @@ export interface TplProps {
 /* ---------- A · Host in his office with the model building and a board ---------- */
 export const HostOffice: React.FC<TplProps & { cam?: 0 | 1 | 2; acts?: Actor['acts']; board?: { lines: string[]; at: number[] }; hi?: number; extra?: Actor[] }> = ({ t, k, cam = 0, acts, board, hi, extra = [] }) => {
   const cams: [Frame, Frame][] = [
-    [{ pos: [0.6, 4.2, 9], target: [0.6, 3.2, -3], fov: 44, fit: 7.5 }, { pos: [0.4, 4.1, 8], target: [0.6, 3.2, -3], fov: 44, fit: 7.2 }],
-    [{ pos: [-0.6, 4.0, 3.5], target: [-1.3, 3.7, -3], fov: 40, fit: 3.4 }, { pos: [-0.7, 4.0, 2.8], target: [-1.3, 3.7, -3], fov: 40, fit: 3.2 }],
+    [{ pos: [-0.4, 4.6, 9], target: [-0.6, 4.0, -3], fov: 44, fit: 11.4 }, { pos: [-0.5, 4.5, 8], target: [-0.6, 4.0, -3], fov: 44, fit: 11 }],
+    [{ pos: [-1.4, 4.8, 3.5], target: [-1.9, 4.6, -3], fov: 40, fit: 6.6 }, { pos: [-1.5, 4.8, 2.8], target: [-1.9, 4.6, -3], fov: 40, fit: 6.3 }],
     [{ pos: [4.2, 4.6, 1.2], target: [3.2, 2.6, -4], fov: 40, fit: 3.6 }, { pos: [4.0, 4.4, 0.4], target: [3.2, 2.6, -4], fov: 40, fit: 3.4 }],
   ];
   const n = board ? revealed(t, board.at) : 0;
@@ -313,8 +313,8 @@ export const Door: React.FC<DoorProps> = ({ t, k, door, floor, who, lines, at, c
   const wall2 = new THREE.Color().setHSL(hue, 0.45, 0.55).getStyle();
   const n = revealed(t, at);
   const cams: [Frame, Frame][] = [
-    [{ pos: [0.8, 4.2, 9], target: [0.4, 3.4, -6], fov: 44, fit: 8.6 }, { pos: [0.6, 4.1, 7.8], target: [0.4, 3.4, -6], fov: 44, fit: 8.2 }],
-    [{ pos: [-3.0, 4.6, 1], target: [-3.2, 4.4, -9.4], fov: 40, fit: 4.6 }, { pos: [-3.0, 4.6, 0], target: [-3.2, 4.4, -9.4], fov: 40, fit: 4.4 }],
+    [{ pos: [-0.8, 4.4, 9], target: [-1.0, 4.0, -6], fov: 44, fit: 10.8 }, { pos: [-0.9, 4.3, 7.8], target: [-1.0, 4.0, -6], fov: 44, fit: 10.4 }],
+    [{ pos: [-3.0, 4.6, 1], target: [-3.2, 4.6, -9.4], fov: 40, fit: 6.4 }, { pos: [-3.0, 4.6, 0], target: [-3.2, 4.6, -9.4], fov: 40, fit: 6.2 }],
     [{ pos: [3.0, 4.0, -1.5], target: [2.1, 3.6, -7], fov: 40, fit: 3.4 }, { pos: [2.9, 4.0, -2.3], target: [2.1, 3.6, -7], fov: 40, fit: 3.2 }],
   ];
   const o = open >= 0 ? sm(t, open, open + 0.8) : 0;
@@ -366,8 +366,8 @@ export const Board: React.FC<TplProps & { lines: string[]; at: number[]; napkin?
     );
   }
   const cams: [Frame, Frame][] = [
-    [{ pos: [1.4, 4.6, 8.5], target: [0.2, 4.6, -6], fov: 44, fit: 9 }, { pos: [1.2, 4.6, 7.6], target: [0.2, 4.6, -6], fov: 44, fit: 8.6 }],
-    [{ pos: [1.2, 5.2, 2], target: [1.2, 5.4, -9.4], fov: 40, fit: 7.6 }, { pos: [1.2, 5.2, 1.2], target: [1.2, 5.4, -9.4], fov: 40, fit: 7.2 }],
+    [{ pos: [0.6, 4.8, 8.5], target: [0.4, 4.6, -6], fov: 44, fit: 11.4 }, { pos: [0.5, 4.8, 7.6], target: [0.4, 4.6, -6], fov: 44, fit: 11 }],
+    [{ pos: [1.2, 5.4, 2], target: [1.2, 5.6, -9.4], fov: 40, fit: 9.4 }, { pos: [1.2, 5.4, 1.2], target: [1.2, 5.6, -9.4], fov: 40, fit: 9.1 }],
   ];
   return (
     <Shot light={LIGHT.office} k={k} a={cams[cam][0]} b={cams[cam][1]}>
@@ -458,7 +458,7 @@ export const Lift: React.FC<TplProps & { open?: number; plates?: { lines: string
   const o = sm(t, open, open + 1.0);
   const n = plates ? revealed(t, plates.at) : 0;
   const cams: [Frame, Frame][] = [
-    [{ pos: [0.6, 4.4, 9], target: [0.4, 3.6, -5], fov: 44, fit: 9 }, { pos: [0.5, 4.3, 7.8], target: [0.4, 3.6, -5], fov: 44, fit: 8.6 }],
+    [{ pos: [-1.6, 4.6, 9], target: [-1.8, 4.0, -5], fov: 44, fit: 15.6 }, { pos: [-1.7, 4.5, 7.8], target: [-1.8, 4.0, -5], fov: 44, fit: 15.2 }],
     [{ pos: [-0.4, 4.0, 2.4], target: [0, 3.6, -7.5], fov: 40, fit: 3.6 }, { pos: [-0.4, 4.0, 1.6], target: [0, 3.6, -7.5], fov: 40, fit: 3.4 }],
   ];
   const angle = -1.2 + ((dial - 1) / 9) * 2.4;
@@ -494,7 +494,7 @@ export const Lift: React.FC<TplProps & { open?: number; plates?: { lines: string
 export const Penthouse: React.FC<TplProps & { plates?: { lines: string[]; at: number[] }; acts?: Actor['acts']; extra?: Actor[] }> = ({ t, k, plates, acts, extra = [] }) => {
   const n = plates ? revealed(t, plates.at) : 0;
   return (
-    <Shot light={LIGHT.night} k={k} a={{ pos: [1, 4.6, 9], target: [0, 3.6, -4], fov: 44, fit: 8.6 }} b={{ pos: [0.8, 4.5, 8], target: [0, 3.6, -4], fov: 44, fit: 8.2 }} lamps={[{ pos: [2, 6, -2], color: '#ffd27a', power: 40, dist: 18 }]}>
+    <Shot light={LIGHT.night} k={k} a={{ pos: [1, 5.2, 9], target: [0, 4.6, -4], fov: 44, fit: 9.6 }} b={{ pos: [0.8, 5.1, 8], target: [0, 4.6, -4], fov: 44, fit: 9.2 }} lamps={[{ pos: [2, 6, -2], color: '#ffd27a', power: 40, dist: 18 }]}>
       <Tx geometry={box} map={stoneTex('#3a3048', [10, 10], 40)} position={[0, -0.25, 0]} scale={[30, 0.5, 26]} line={0} />
       {/* skyline far below */}
       {Array.from({ length: 16 }, (_, i) => {
@@ -569,7 +569,7 @@ export const Bars: React.FC<TplProps & { title: string; bars: Bar[]; who?: Actor
   const W = bars.length;
   const H = 7;
   return (
-    <Shot light={LIGHT.office} k={k} a={cam ? { pos: [0, 5, 9], target: [0, 4.4, -4], fov: 44, fit: Math.max(8, W * 3 + 3) } : { pos: [2, 5, 11], target: [0, 4.2, -4], fov: 44, fit: Math.max(9, W * 3 + 5) }} b={cam ? { pos: [0, 5, 8], target: [0, 4.4, -4], fov: 44, fit: Math.max(7.6, W * 3 + 2.6) } : { pos: [1.6, 5, 10], target: [0, 4.2, -4], fov: 44, fit: Math.max(8.6, W * 3 + 4.6) }}>
+    <Shot light={LIGHT.office} k={k} a={cam ? { pos: [0, 6, 9], target: [0, 5.4, -4], fov: 44, fit: Math.max(11.5, W * 3 + 3) } : { pos: [1, 6, 11], target: [0, 5.4, -4], fov: 44, fit: Math.max(15, W * 3 + 6) }} b={cam ? { pos: [0, 6, 8], target: [0, 5.4, -4], fov: 44, fit: Math.max(11.2, W * 3 + 2.6) } : { pos: [0.8, 6, 10], target: [0, 5.4, -4], fov: 44, fit: Math.max(14.6, W * 3 + 5.6) }}>
       <OfficeSet />
       <Tx geometry={plane} map={boardTex([`!${title}`], 1, { bg: '#1d1830', accent: '#ffd34d', w: 1024, h: 180 })} position={[0, 10.2, -9.5]} scale={[11, 1.9, 1]} line={0} />
       <Toon geometry={G.box} color="#6a3a22" position={[0, 0.3, -4]} scale={[W * 3 + 1.5, 0.6, 2.4]} line={3} />
@@ -592,7 +592,7 @@ export const Bars: React.FC<TplProps & { title: string; bars: Bar[]; who?: Actor
 
 /* ---------- L · Two people side by side with plates (age, income vs wealth, women vs men) ---------- */
 export const Duo: React.FC<TplProps & { a: Actor; b: Actor; la: { lines: string[]; at: number[] }; lb: { lines: string[]; at: number[] }; bg?: 'office' | 'street' }> = ({ t, k, a, b, la, lb }) => (
-  <Shot light={LIGHT.office} k={k} a={{ pos: [0, 4.4, 9.5], target: [0, 3.8, -4], fov: 44, fit: 9.6 }} b={{ pos: [0, 4.3, 8.4], target: [0, 3.8, -4], fov: 44, fit: 9.2 }}>
+  <Shot light={LIGHT.office} k={k} a={{ pos: [0, 5.0, 9.5], target: [0, 4.8, -4], fov: 44, fit: 11.8 }} b={{ pos: [0, 5.0, 8.4], target: [0, 4.8, -4], fov: 44, fit: 11.4 }}>
     <OfficeSet />
     <WallCard map={boardTex(la.lines, revealed(t, la.at), { bg: '#f6efdc', fg: '#1d1830', accent: '#c8302c' })} pos={[-3.2, 7.2, -9.6]} size={[5.2, 3.6]} frame="#1d1830" />
     <WallCard map={boardTex(lb.lines, revealed(t, lb.at), { bg: '#f6efdc', fg: '#1d1830', accent: '#c8302c' })} pos={[3.2, 7.2, -9.6]} size={[5.2, 3.6]} frame="#1d1830" />
