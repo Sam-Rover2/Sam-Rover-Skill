@@ -56,3 +56,6 @@ description: Свой стиль пользователя «Ink Diorama Toon» (
 
 ## Новый ролик
 Копия движка: `films/income-building/` (src/movie, src/film/kit, src/rig, tools). Персонажи — в `src/project.ts` (`CAST`); новые головные уборы (`hardhat`, `tophat`, `gradcap`, `beanie`, `visor`) и костюмы (`suit`, `overalls`, `gown`, `scrubs`, `hoodie`, `vest`) уже есть в `Person.tsx`. Лист персонажей: `src/building/CastSheet.tsx` (общий план: в 9:16 два ряда, в 16:9 один).
+
+## Согласование — всегда через HTML (QA-048)
+Персонажей, объекты, локации и расстановку пользователь согласует в интерактивном `review/Согласование.html` (свободная камера, пролёты, метки 📍): собрать `npm run review`, проверить, прислать файл. Картинки и Remotion Studio — только в дополнение.
